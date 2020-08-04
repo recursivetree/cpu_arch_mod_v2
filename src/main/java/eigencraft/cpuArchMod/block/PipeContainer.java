@@ -1,22 +1,27 @@
 package eigencraft.cpuArchMod.block;
 
-import net.minecraft.block.*;
-import net.minecraft.fluid.Fluids;
+import eigencraft.cpuArchMod.simulation.SimulationPipe;
+import eigencraft.cpuArchMod.simulation.SimulationWorld;
+import eigencraft.cpuArchMod.simulation.SimulationWorldProvider;
+import eigencraft.cpuArchMod.simulation.SimulationWorldRunnable;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.ConnectingBlock;
+import net.minecraft.block.Material;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.item.ItemStack;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.state.property.Property;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
-import net.minecraft.world.WorldView;
 
 import java.util.Map;
 
-public class SimulationPipeContainer extends ConnectingBlock implements CpuArchModBlock {
+public class PipeContainer extends ConnectingBlock implements CpuArchModBlock {
 
     private static final BooleanProperty UP;
     private static final BooleanProperty DOWN;
@@ -27,7 +32,7 @@ public class SimulationPipeContainer extends ConnectingBlock implements CpuArchM
     private static final Map<Direction, BooleanProperty> FACING_PROPERTIES;
 
 
-    public SimulationPipeContainer() {
+    public PipeContainer() {
         super(0.2f,Settings.of(Material.STONE).breakInstantly().strength(1));
         setDefaultState(getDefaultState()
                 .with(UP, false)
@@ -41,6 +46,30 @@ public class SimulationPipeContainer extends ConnectingBlock implements CpuArchM
 
     private boolean shouldConnect(BlockState state){
         return state.getBlock() instanceof CpuArchModBlock;
+    }
+
+    @Override
+    public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack itemStack) {
+        if (!world.isClient()){
+            ((SimulationWorldProvider)world).addSimulationWorldTask(new SimulationWorldRunnable() {
+                @Override
+                public void run(SimulationWorld world) {
+                    world.addSimulationObject(pos,new SimulationPipe());
+                }
+            });
+        }
+    }
+
+    @Override
+    public void onBroken(WorldAccess world, BlockPos pos, BlockState state) {
+        if (!world.isClient()){
+            ((SimulationWorldProvider)world).addSimulationWorldTask(new SimulationWorldRunnable() {
+                @Override
+                public void run(SimulationWorld world) {
+                    world.removeSimulationObject(pos);
+                }
+            });
+        }
     }
 
     @Override

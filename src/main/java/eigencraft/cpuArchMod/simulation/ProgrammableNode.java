@@ -4,9 +4,8 @@ import com.google.gson.JsonElement;
 
 import java.util.ArrayList;
 
-public class SimulationPipe implements SimulationAgent {
+public class ProgrammableNode implements SimulationAgent {
     private final ArrayList<SimulationAgent> connectedObjects =   new ArrayList<>();
-    private boolean blocked = false;
 
     public void connect(SimulationAgent other){
         connectedObjects.add(other);
@@ -27,12 +26,9 @@ public class SimulationPipe implements SimulationAgent {
 
     @Override
     public void process(SimulationMessage message) {
-        if (!blocked){
-            blocked = true;
-            for (SimulationAgent simObj:connectedObjects){
-                simObj.process(message);
-            }
-            blocked = false;
+        System.out.println("yeah");
+        for (SimulationAgent o:connectedObjects){
+            o.process(message);
         }
     }
 
@@ -42,6 +38,6 @@ public class SimulationPipe implements SimulationAgent {
     }
 
     static {
-        SimulationAgent.register(SimulationPipe.class.getSimpleName(),SimulationPipe::new);
+        SimulationAgent.register(ProgrammableNode.class.getSimpleName(),ProgrammableNode::new);
     }
 }
