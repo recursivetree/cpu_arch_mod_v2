@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "cpu_arch_mod",
+  "version": "${version}",
+
+  "name": "cpu architecture mod",
+  "description": "todo:description",
+  "authors": [
+    "recursive_tree"
+  ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/FabricMC/fabric-example-mod"
+  },
+
+  "license": "CC0-1.0",
+  "icon": "assets/cpu_arch_mod/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "eigencraft.cpuArchMod.CpuArchMod"
+    ],
+    "client": [
+      "eigencraft.cpuArchMod.CpuArchMod"
+    ]
+  },
+  "mixins": [
+    "cpu_arch_mod.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.8.8",
+    "fabric": "*",
+    "minecraft": "1.16.1"
+  },
+  "suggests": {
+    "flamingo": "*"
+  }
+}
