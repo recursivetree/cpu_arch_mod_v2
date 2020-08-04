@@ -1,0 +1,19 @@
+{
+    "textures": {
+        "particle": "cpu_arch_mod:block/pipe",
+        "pipe": "cpu_arch_mod:block/pipe"
+    },
+    "elements": [
+        {   "from": [ 5, 5, 5 ],
+            "to": [ 11, 11, 11 ],
+            "faces": {
+                "down":  { "texture": "#pipe", "cullface": "down", "rotation": 90 },
+                "up":    { "texture": "#pipe", "cullface": "up"   },
+                "north": { "texture": "#pipe" },
+                "south": { "texture": "#pipe" },
+                "west":  { "texture": "#pipe" },
+                "east":  { "texture": "#pipe" }
+            }
+        }
+    ]
+}
