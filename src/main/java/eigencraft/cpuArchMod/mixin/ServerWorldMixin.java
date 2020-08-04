@@ -1,7 +1,7 @@
 package eigencraft.cpuArchMod.mixin;
 
 import eigencraft.cpuArchMod.simulation.SimulationWorld;
-import eigencraft.cpuArchMod.simulation.SimulationWorldProvider;
+import eigencraft.cpuArchMod.simulation.SimulationWorldInterface;
 import eigencraft.cpuArchMod.simulation.SimulationWorldRunnable;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.WorldGenerationProgressListener;
@@ -24,7 +24,7 @@ import java.util.concurrent.Executor;
 
 
 @Mixin(ServerWorld.class)
-public abstract class ServerWorldMixin implements SimulationWorldProvider {
+public abstract class ServerWorldMixin implements SimulationWorldInterface {
 
     private SimulationWorld simulationWorld;
 

@@ -1,6 +1,7 @@
 package eigencraft.cpuArchMod.block;
 
 import eigencraft.cpuArchMod.simulation.*;
+import eigencraft.cpuArchMod.simulation.agents.ProgrammableAgent;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Material;
@@ -22,10 +23,10 @@ public class ProgrammableNodeContainer extends Block implements CpuArchModBlock{
     @Override
     public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack itemStack) {
         if (!world.isClient()){
-            ((SimulationWorldProvider)world).addSimulationWorldTask(new SimulationWorldRunnable() {
+            ((SimulationWorldInterface)world).addSimulationWorldTask(new SimulationWorldRunnable() {
                 @Override
                 public void run(SimulationWorld world) {
-                    world.addSimulationObject(pos,new ProgrammableNode());
+                    world.addSimulationAgent(pos,new ProgrammableAgent());
                 }
             });
         }
@@ -34,10 +35,10 @@ public class ProgrammableNodeContainer extends Block implements CpuArchModBlock{
     @Override
     public void onBroken(WorldAccess world, BlockPos pos, BlockState state) {
         if (!world.isClient()){
-            ((SimulationWorldProvider)world).addSimulationWorldTask(new SimulationWorldRunnable() {
+            ((SimulationWorldInterface)world).addSimulationWorldTask(new SimulationWorldRunnable() {
                 @Override
                 public void run(SimulationWorld world) {
-                    world.removeSimulationObject(pos);
+                    world.removeSimulationAgent(pos);
                 }
             });
         }
@@ -46,10 +47,10 @@ public class ProgrammableNodeContainer extends Block implements CpuArchModBlock{
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
         if (!world.isClient()){
-            ((SimulationWorldProvider)world).addSimulationWorldTask(new SimulationWorldRunnable() {
+            ((SimulationWorldInterface)world).addSimulationWorldTask(new SimulationWorldRunnable() {
                 @Override
                 public void run(SimulationWorld world) {
-                    world.getSimulationObjectAt(pos).process(new SimulationMessage());
+                    world.getSimulationAgentAt(pos).process(new SimulationMessage());
                 }
             });
         }

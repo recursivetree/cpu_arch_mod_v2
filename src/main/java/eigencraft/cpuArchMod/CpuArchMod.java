@@ -3,7 +3,7 @@ package eigencraft.cpuArchMod;
 
 import eigencraft.cpuArchMod.block.PipeContainer;
 import eigencraft.cpuArchMod.block.ProgrammableNodeContainer;
-import eigencraft.cpuArchMod.simulation.SimulationWorldProvider;
+import eigencraft.cpuArchMod.simulation.SimulationWorldInterface;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder;
@@ -40,7 +40,7 @@ public class CpuArchMod implements ModInitializer, ClientModInitializer {
             @Override
             public void onStopServer(MinecraftServer minecraftServer) {
                 for (ServerWorld world:minecraftServer.getWorlds()){
-                    ((SimulationWorldProvider)world).stopSimulation();
+                    ((SimulationWorldInterface)world).stopSimulation();
                 }
             }
         });

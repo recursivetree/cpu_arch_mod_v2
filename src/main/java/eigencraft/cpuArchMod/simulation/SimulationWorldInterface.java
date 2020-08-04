@@ -1,6 +1,6 @@
 package eigencraft.cpuArchMod.simulation;
 
-public interface SimulationWorldProvider {
+public interface SimulationWorldInterface {
     public void addSimulationWorldTask(SimulationWorldRunnable runnable);
 
     void stopSimulation();

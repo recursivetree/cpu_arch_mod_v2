@@ -28,7 +28,9 @@ public class SimulationWorld implements Runnable{
 
     public SimulationChunk getChunk(ChunkPos chunkPos){
         if (!loadedChunks.containsKey(chunkPos)){
-            loadChunk(chunkPos);
+            SimulationChunk newChunk = new SimulationChunk(this);
+            loadedChunks.put(chunkPos,newChunk);
+            SimulationChunkStorage.loadChunk(chunkPos,newChunk,saveDirectory);
         }
         return loadedChunks.get(chunkPos);
     }
@@ -37,17 +39,11 @@ public class SimulationWorld implements Runnable{
         return getChunk(new ChunkPos(pos));
     }
 
-    private void loadChunk(ChunkPos chunkPos) {
-        SimulationChunk newChunk = new SimulationChunk(this);
-        loadedChunks.put(chunkPos,newChunk);
-        SimulationChunkStorage.loadChunk(chunkPos,newChunk,saveDirectory);
-    }
-
-    public void addSimulationObject(BlockPos pos, SimulationAgent simulationAgent){
+    public void addSimulationAgent(BlockPos pos, SimulationAgent simulationAgent){
         getChunk(pos).addAgent(pos, simulationAgent);
     }
 
-    public void removeSimulationObject(BlockPos pos){
+    public void removeSimulationAgent(BlockPos pos){
         getChunk(pos).removeConnectable(pos);
     }
 
@@ -58,6 +54,9 @@ public class SimulationWorld implements Runnable{
             while (!tasks.isEmpty()) {
                 synchronized (tasks) {
                     tasks.remove().run(this);
+                }
+                for (SimulationChunk chunk:loadedChunks.values()){
+                    chunk.tick();
                 }
                 if (System.currentTimeMillis()-lastSave>60000){
                     saveWorld();
@@ -87,7 +86,7 @@ public class SimulationWorld implements Runnable{
         }
     }
 
-    public SimulationAgent getSimulationObjectAt(BlockPos pos) {
+    public SimulationAgent getSimulationAgentAt(BlockPos pos) {
         return getChunk(pos).getSimulationObjectAt(pos);
     }
 

@@ -1,8 +1,8 @@
 package eigencraft.cpuArchMod.block;
 
-import eigencraft.cpuArchMod.simulation.SimulationPipe;
+import eigencraft.cpuArchMod.simulation.agents.PipeAgent;
 import eigencraft.cpuArchMod.simulation.SimulationWorld;
-import eigencraft.cpuArchMod.simulation.SimulationWorldProvider;
+import eigencraft.cpuArchMod.simulation.SimulationWorldInterface;
 import eigencraft.cpuArchMod.simulation.SimulationWorldRunnable;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -51,10 +51,10 @@ public class PipeContainer extends ConnectingBlock implements CpuArchModBlock {
     @Override
     public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack itemStack) {
         if (!world.isClient()){
-            ((SimulationWorldProvider)world).addSimulationWorldTask(new SimulationWorldRunnable() {
+            ((SimulationWorldInterface)world).addSimulationWorldTask(new SimulationWorldRunnable() {
                 @Override
                 public void run(SimulationWorld world) {
-                    world.addSimulationObject(pos,new SimulationPipe());
+                    world.addSimulationAgent(pos,new PipeAgent());
                 }
             });
         }
@@ -63,10 +63,10 @@ public class PipeContainer extends ConnectingBlock implements CpuArchModBlock {
     @Override
     public void onBroken(WorldAccess world, BlockPos pos, BlockState state) {
         if (!world.isClient()){
-            ((SimulationWorldProvider)world).addSimulationWorldTask(new SimulationWorldRunnable() {
+            ((SimulationWorldInterface)world).addSimulationWorldTask(new SimulationWorldRunnable() {
                 @Override
                 public void run(SimulationWorld world) {
-                    world.removeSimulationObject(pos);
+                    world.removeSimulationAgent(pos);
                 }
             });
         }

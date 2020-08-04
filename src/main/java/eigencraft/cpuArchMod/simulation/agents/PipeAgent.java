@@ -1,11 +1,14 @@
-package eigencraft.cpuArchMod.simulation;
+package eigencraft.cpuArchMod.simulation.agents;
 
 import com.google.gson.JsonElement;
+import eigencraft.cpuArchMod.simulation.SimulationAgent;
+import eigencraft.cpuArchMod.simulation.SimulationMessage;
 
 import java.util.ArrayList;
 
-public class ProgrammableNode implements SimulationAgent {
+public class PipeAgent implements SimulationAgent {
     private final ArrayList<SimulationAgent> connectedObjects =   new ArrayList<>();
+    private boolean blocked = false;
 
     public void connect(SimulationAgent other){
         connectedObjects.add(other);
@@ -26,9 +29,12 @@ public class ProgrammableNode implements SimulationAgent {
 
     @Override
     public void process(SimulationMessage message) {
-        System.out.println("yeah");
-        for (SimulationAgent o:connectedObjects){
-            o.process(message);
+        if (!blocked){
+            blocked = true;
+            for (SimulationAgent simObj:connectedObjects){
+                simObj.process(message);
+            }
+            blocked = false;
         }
     }
 
@@ -37,7 +43,12 @@ public class ProgrammableNode implements SimulationAgent {
         return null;
     }
 
+    @Override
+    public void loadConfig(JsonElement config) {
+
+    }
+
     static {
-        SimulationAgent.register(ProgrammableNode.class.getSimpleName(),ProgrammableNode::new);
+        SimulationAgent.register(PipeAgent.class.getSimpleName(), PipeAgent::new);
     }
 }

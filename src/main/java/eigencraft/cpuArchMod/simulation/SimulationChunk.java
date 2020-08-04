@@ -5,7 +5,7 @@ import net.minecraft.util.math.BlockPos;
 import java.util.HashMap;
 
 public class SimulationChunk {
-    private HashMap<BlockPos, SimulationAgent> simulationObjects = new HashMap<>();
+    private HashMap<BlockPos, SimulationAgent> simulationAgents = new HashMap<>();
     SimulationWorld simulation;
 
     public SimulationChunk(SimulationWorld simulation) {
@@ -13,7 +13,7 @@ public class SimulationChunk {
     }
 
     public void addAgent(BlockPos pos, SimulationAgent simulationAgent){
-        simulationObjects.put(pos, simulationAgent);
+        simulationAgents.put(pos, simulationAgent);
 
         simulation.getChunk(pos.north()).connectConnectable(simulationAgent,pos.north());
         simulation.getChunk(pos.south()).connectConnectable(simulationAgent,pos.south());
@@ -24,32 +24,38 @@ public class SimulationChunk {
     }
 
     private void connectConnectable(SimulationAgent newSimulationAgent, BlockPos pos) {
-        if (simulationObjects.containsKey(pos)){
-            SimulationAgent oldSimulationAgent = simulationObjects.get(pos);
+        if (simulationAgents.containsKey(pos)){
+            SimulationAgent oldSimulationAgent = simulationAgents.get(pos);
             oldSimulationAgent.connect(newSimulationAgent);
             newSimulationAgent.connect(oldSimulationAgent);
         }
     }
 
     public void removeConnectable(BlockPos pos){
-        if (simulationObjects.containsKey(pos)){
-            SimulationAgent toRemove = simulationObjects.get(pos);
-            for (SimulationAgent thing:toRemove.getConnections()){
-                thing.disconnect(toRemove);
+        if (simulationAgents.containsKey(pos)){
+            SimulationAgent toRemove = simulationAgents.get(pos);
+            for (SimulationAgent agent:toRemove.getConnections()){
+                agent.disconnect(toRemove);
             }
-            simulationObjects.remove(pos);
+            simulationAgents.remove(pos);
         }
     }
 
     public SimulationAgent getSimulationObjectAt(BlockPos pos) {
-        return simulationObjects.getOrDefault(pos,null);
+        return simulationAgents.getOrDefault(pos,null);
     }
 
     public boolean shouldSave(){
-        return simulationObjects.size()>0;
+        return simulationAgents.size()>0;
     }
 
-    public HashMap<BlockPos, SimulationAgent> getSimulationObjects() {
-        return simulationObjects;
+    public HashMap<BlockPos, SimulationAgent> getSimulationAgents() {
+        return simulationAgents;
+    }
+
+    public void tick(){
+        for (SimulationAgent agent: simulationAgents.values()){
+            agent.tick();
+        }
     }
 }

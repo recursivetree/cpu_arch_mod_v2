@@ -13,13 +13,13 @@ public interface SimulationAgent {
     public void tick();
     public void process(SimulationMessage message);
     public JsonElement getConfigData();
+    public void loadConfig(JsonElement config);
 
     static HashMap<String, Supplier<SimulationAgent>> constructors = new HashMap<>();
     public static void register(String name,Supplier<SimulationAgent> constructor){
         constructors.put(name,constructor);
     }
     public static SimulationAgent getSimulationObject(String name){
-        //System.out.println(name);
         return constructors.get(name).get();
     }
 

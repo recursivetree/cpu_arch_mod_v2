@@ -3,6 +3,7 @@ package eigencraft.cpuArchMod.simulation;
 import com.google.gson.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
+import org.apache.logging.log4j.LogManager;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -11,26 +12,26 @@ import java.nio.file.Files;
 import java.util.Map;
 
 public class SimulationChunkStorage {
-    public static final int version = 0;
+    public static final int version = 1;
 
     public static void saveChunk(ChunkPos pos, SimulationChunk chunk,File worldSavePath){
         JsonObject root = new JsonObject();
         root.add("version",new JsonPrimitive(version));
 
-        JsonArray simulationObjects = new JsonArray();
-        root.add("objects",simulationObjects);
+        JsonArray simulationAgents = new JsonArray();
+        root.add("agents",simulationAgents);
 
-        for(Map.Entry<BlockPos, SimulationAgent> simulationObject:chunk.getSimulationObjects().entrySet()){
-            JsonObject simulationObjectJson = new JsonObject();
-            simulationObjectJson.add("x",new JsonPrimitive(simulationObject.getKey().getX()));
-            simulationObjectJson.add("y",new JsonPrimitive(simulationObject.getKey().getY()));
-            simulationObjectJson.add("z",new JsonPrimitive(simulationObject.getKey().getZ()));
-            simulationObjectJson.add("type",new JsonPrimitive(simulationObject.getValue().getClass().getSimpleName()));
-            JsonElement customData = simulationObject.getValue().getConfigData();
+        for(Map.Entry<BlockPos, SimulationAgent> simulationAgent:chunk.getSimulationAgents().entrySet()){
+            JsonObject simulationAgentJson = new JsonObject();
+            simulationAgentJson.add("x",new JsonPrimitive(simulationAgent.getKey().getX()));
+            simulationAgentJson.add("y",new JsonPrimitive(simulationAgent.getKey().getY()));
+            simulationAgentJson.add("z",new JsonPrimitive(simulationAgent.getKey().getZ()));
+            simulationAgentJson.add("type",new JsonPrimitive(simulationAgent.getValue().getClass().getSimpleName()));
+            JsonElement customData = simulationAgent.getValue().getConfigData();
             if (customData!=null){
-                simulationObjectJson.add("data",customData);
+                simulationAgentJson.add("data",customData);
             }
-            simulationObjects.add(simulationObjectJson);
+            simulationAgents.add(simulationAgentJson);
         }
 
         File chunkFile = getChunkSavePath(pos,worldSavePath);
@@ -44,7 +45,7 @@ public class SimulationChunkStorage {
         }
 
     }
-    public static SimulationChunk loadChunk(ChunkPos pos,SimulationChunk chunk, File worldSavePath){
+    public static void loadChunk(ChunkPos pos,SimulationChunk chunk, File worldSavePath){
         File savePath = getChunkSavePath(pos,worldSavePath);
 
         if (savePath.isFile()){
@@ -53,19 +54,30 @@ public class SimulationChunkStorage {
                 root = JsonParser.parseString(new String(Files.readAllBytes(savePath.toPath()))).getAsJsonObject();
             } catch (IOException e) {
                 e.printStackTrace();
-                return chunk;
+                return;
             }
 
-            JsonArray simulationObjects = root.getAsJsonArray("objects");
-            for (JsonElement i:simulationObjects){
-                JsonObject agentElement = i.getAsJsonObject();
-                BlockPos agentPos = new BlockPos(agentElement.get("x").getAsInt(),agentElement.get("y").getAsInt(),agentElement.get("z").getAsInt());
-                SimulationAgent simulationAgent = SimulationAgent.getSimulationObject(agentElement.get("type").getAsString());
-                chunk.addAgent(agentPos,simulationAgent);
+            try {
+                int found_version = root.get("version").getAsInt();
+                if (found_version > version){
+                    LogManager.getLogger().warn("Found simulation chunk from newer mod version!");
+                } else if (found_version < version){
+                    //TODO upgrade system?
+                    LogManager.getLogger().warn(String.format("Found simulation chunk from older mod version! Found: %d, running version: %d",found_version,version));
+                }
+
+                JsonArray simulationAgents = root.getAsJsonArray("agents");
+                for (JsonElement i : simulationAgents) {
+                    JsonObject agentElement = i.getAsJsonObject();
+                    BlockPos agentPos = new BlockPos(agentElement.get("x").getAsInt(), agentElement.get("y").getAsInt(), agentElement.get("z").getAsInt());
+                    SimulationAgent simulationAgent = SimulationAgent.getSimulationObject(agentElement.get("type").getAsString());
+                    chunk.addAgent(agentPos, simulationAgent);
+                }
+            } catch (Exception e){
+                e.printStackTrace();
             }
 
         }
-        return chunk;
     }
     public static File getChunkSavePath(ChunkPos pos, File worldSavePath){
         return new File(worldSavePath,String.format("x%dz%d.json",pos.x,pos.z));
