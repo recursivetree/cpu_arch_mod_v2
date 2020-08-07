@@ -48,7 +48,4 @@ public class PipeAgent implements SimulationAgent {
 
     }
 
-    static {
-        SimulationAgent.register(PipeAgent.class.getSimpleName(), PipeAgent::new);
-    }
 }

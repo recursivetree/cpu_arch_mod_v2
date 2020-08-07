@@ -86,7 +86,7 @@ public class SimulationWorld implements Runnable{
         }
     }
 
-    public SimulationAgent getSimulationAgentAt(BlockPos pos) {
+    public SimulationAgent getSimulationAgent(BlockPos pos) {
         return getChunk(pos).getSimulationObjectAt(pos);
     }
 

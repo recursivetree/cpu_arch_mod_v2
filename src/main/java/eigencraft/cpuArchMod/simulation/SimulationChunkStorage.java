@@ -71,6 +71,9 @@ public class SimulationChunkStorage {
                     JsonObject agentElement = i.getAsJsonObject();
                     BlockPos agentPos = new BlockPos(agentElement.get("x").getAsInt(), agentElement.get("y").getAsInt(), agentElement.get("z").getAsInt());
                     SimulationAgent simulationAgent = SimulationAgent.getSimulationObject(agentElement.get("type").getAsString());
+                    if (agentElement.has("data")){
+                        simulationAgent.loadConfig(agentElement.get("data"));
+                    }
                     chunk.addAgent(agentPos, simulationAgent);
                 }
             } catch (Exception e){

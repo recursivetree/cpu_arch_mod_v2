@@ -1,2 +1,4 @@
 {
+  "gui.cpu_arch_mod.select_script": "select script",
+  "gui.cpu_arch_mod.select": "select"
 }
