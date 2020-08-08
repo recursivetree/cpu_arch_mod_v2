@@ -55,12 +55,12 @@ public class SimulationWorld implements Runnable{
                 synchronized (tasks) {
                     tasks.remove().run(this);
                 }
-                for (SimulationChunk chunk:loadedChunks.values()){
-                    chunk.tick();
-                }
-                if (System.currentTimeMillis()-lastSave>60000){
-                    saveWorld();
-                }
+            }
+            for (SimulationChunk chunk:loadedChunks.values()){
+                chunk.tick();
+            }
+            if (System.currentTimeMillis()-lastSave>60000){
+                saveWorld();
             }
         }
         saveWorld();

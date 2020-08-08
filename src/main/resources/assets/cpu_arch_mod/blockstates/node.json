@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "cpu_arch_mod:block/node" }
+  }
+}
