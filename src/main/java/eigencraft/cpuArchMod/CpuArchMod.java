@@ -2,7 +2,8 @@ package eigencraft.cpuArchMod;
 
 
 import eigencraft.cpuArchMod.block.PipeContainer;
-import eigencraft.cpuArchMod.block.ProgrammableAgentContainer;
+import eigencraft.cpuArchMod.block.ProgrammableAgentBlockEntity;
+import eigencraft.cpuArchMod.block.ProgrammableAgentContainerBlock;
 import eigencraft.cpuArchMod.gui.ProgrammableAgentGUI;
 import eigencraft.cpuArchMod.simulation.SimulationAgent;
 import eigencraft.cpuArchMod.simulation.SimulationWorld;
@@ -14,6 +15,7 @@ import io.github.cottonmc.cotton.gui.client.CottonClientScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder;
+import net.fabricmc.fabric.api.client.rendereregistry.v1.BlockEntityRendererRegistry;
 import net.fabricmc.fabric.api.event.server.ServerStopCallback;
 import net.fabricmc.fabric.api.network.ClientSidePacketRegistry;
 import net.fabricmc.fabric.api.network.PacketConsumer;
@@ -21,6 +23,7 @@ import net.fabricmc.fabric.api.network.PacketContext;
 import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
+import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
@@ -46,12 +49,15 @@ public class CpuArchMod implements ModInitializer, ClientModInitializer {
             () -> ItemStack.EMPTY);
 
     public static final Block PIPE = new PipeContainer();
-    public static final Block PROGRAMMABLE_NODE = new ProgrammableAgentContainer();
+    public static final Block PROGRAMMABLE_NODE = new ProgrammableAgentContainerBlock();
 
     public static final Identifier PROGRAMMABLE_AGENT_OPEN_GUI_S2C_PACKET = new Identifier(MOD_ID,"prg_agent_open_s2c");
     public static final Identifier PROGRAMMABLE_AGENT_SAFE_CONFIG_C2S_PACKET = new Identifier(MOD_ID,"prg_agent_safe_c2s");
 
     public static final Configuration CONFIGURATION = new Configuration();
+
+
+    public static BlockEntityType<ProgrammableAgentBlockEntity> PROGRAMMABLE_AGENT_BLOCK_ENTITY;
 
     @Override
     public void onInitialize() {
@@ -59,6 +65,8 @@ public class CpuArchMod implements ModInitializer, ClientModInitializer {
         Registry.register(Registry.ITEM, new Identifier(MOD_ID, "pipe"), new BlockItem(PIPE, new Item.Settings().group(CPU_ARCH_MOD_ITEMGROUP)));
         Registry.register(Registry.BLOCK, new Identifier(MOD_ID, "node"), PROGRAMMABLE_NODE);
         Registry.register(Registry.ITEM, new Identifier(MOD_ID, "node"), new BlockItem(PROGRAMMABLE_NODE, new Item.Settings().group(CPU_ARCH_MOD_ITEMGROUP)));
+
+        PROGRAMMABLE_AGENT_BLOCK_ENTITY = Registry.register(Registry.BLOCK_ENTITY_TYPE, "cpu_arch_mod:node_block_entity", BlockEntityType.Builder.create(ProgrammableAgentBlockEntity::new, PROGRAMMABLE_NODE).build(null));
 
         ServerStopCallback.EVENT.register(new ServerStopCallback() {
             @Override
@@ -80,6 +88,8 @@ public class CpuArchMod implements ModInitializer, ClientModInitializer {
                 BlockPos pos = packetByteBuf.readBlockPos();
                 String fileName = packetByteBuf.readString();
                 String src = packetByteBuf.readString();
+                String customName = packetByteBuf.readString();
+                int color = packetByteBuf.readInt();
 
                 File saveFile = new File(new File(FabricLoader.getInstance().getConfigDirectory(),"cpu_arch_mod_scripts"),fileName);
                 try {
@@ -102,12 +112,23 @@ public class CpuArchMod implements ModInitializer, ClientModInitializer {
                         }
                     }
                 });
+
+                packetContext.getTaskQueue().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        System.out.println("setter");
+                        ProgrammableAgentBlockEntity blockEntity = (ProgrammableAgentBlockEntity) packetContext.getPlayer().getEntityWorld().getBlockEntity(pos);
+                        blockEntity.setAppearance(customName,color);
+                    }
+                });
             }
         });
     }
 
     @Override
     public void onInitializeClient() {
+        BlockEntityRendererRegistry.INSTANCE.register(PROGRAMMABLE_AGENT_BLOCK_ENTITY, ProgrammableAgentBlockEntity.ProgrammableAgentRenderer::new);
+
         ClientSidePacketRegistry.INSTANCE.register(PROGRAMMABLE_AGENT_OPEN_GUI_S2C_PACKET, new PacketConsumer() {
             @Override
             public void accept(PacketContext packetContext, PacketByteBuf packetByteBuf) {
@@ -122,6 +143,8 @@ public class CpuArchMod implements ModInitializer, ClientModInitializer {
                 });
             }
         });
+
+
     }
 }
 

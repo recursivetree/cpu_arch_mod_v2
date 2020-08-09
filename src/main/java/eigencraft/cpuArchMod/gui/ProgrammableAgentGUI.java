@@ -3,6 +3,7 @@ package eigencraft.cpuArchMod.gui;
 import eigencraft.cpuArchMod.CpuArchMod;
 import io.github.cottonmc.cotton.gui.client.LightweightGuiDescription;
 import io.github.cottonmc.cotton.gui.widget.*;
+import io.github.cottonmc.cotton.gui.widget.data.Color;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.network.ClientSidePacketRegistry;
 import net.fabricmc.loader.api.FabricLoader;
@@ -129,6 +130,8 @@ public class ProgrammableAgentGUI extends LightweightGuiDescription {
         passedData.writeBlockPos(this.pos);
         passedData.writeString(currentScriptFileName);
         passedData.writeString(currentScript);
+        passedData.writeString(currentScriptFileName);
+        passedData.writeInt(Color.LIME_DYE.toRgb());
         // Send packet to server to change the block for us
         ClientSidePacketRegistry.INSTANCE.sendToServer(CpuArchMod.PROGRAMMABLE_AGENT_SAFE_CONFIG_C2S_PACKET, passedData);
     }
