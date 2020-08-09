@@ -55,6 +55,7 @@ public class SimulationChunk {
 
     public void tick(){
         for (SimulationAgent agent: simulationAgents.values()){
+            //Use special tick for cleaner sub class implementation of SimulationAgent
             agent.tick();
         }
     }

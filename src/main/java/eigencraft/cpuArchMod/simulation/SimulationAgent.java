@@ -2,18 +2,56 @@ package eigencraft.cpuArchMod.simulation;
 
 import com.google.gson.JsonElement;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.function.Supplier;
 
-public interface SimulationAgent {
-    public void connect(SimulationAgent other);
-    public void disconnect(SimulationAgent other);
-    public Collection<SimulationAgent> getConnections();
-    public void tick();
-    public void process(SimulationMessage message);
-    public JsonElement getConfigData();
-    public void loadConfig(JsonElement config);
+public abstract class SimulationAgent {
+    private final ArrayList<SimulationAgent> connectedAgents =   new ArrayList<>();
+    private boolean blocked = false;
+
+    public void connect(SimulationAgent other){
+        connectedAgents.add(other);
+    }
+
+    public void disconnect(SimulationAgent other){
+        connectedAgents.remove(other);
+    }
+
+    public ArrayList<SimulationAgent> getConnections(){
+        return connectedAgents;
+    }
+
+    public void publish(SimulationMessage message){
+        if (!blocked) {
+            lock();
+            for (SimulationAgent agent : connectedAgents) {
+                agent.process(message);
+            }
+            unlock();
+        }
+    }
+
+    public void unlock(){
+        if (blocked) {
+            blocked = false;
+            for (SimulationAgent agent : connectedAgents) {
+                agent.unlock();
+            }
+        }
+    }
+    public void lock(){
+        blocked = true;
+    }
+    public boolean isLocked(){
+        return blocked;
+    }
+
+
+    public abstract void tick();
+    public abstract void process(SimulationMessage message);
+    public abstract JsonElement getConfigData();
+    public abstract void loadConfig(JsonElement config);
 
     static HashMap<String, Supplier<SimulationAgent>> constructors = new HashMap<>();
     public static void register(String name,Supplier<SimulationAgent> constructor){

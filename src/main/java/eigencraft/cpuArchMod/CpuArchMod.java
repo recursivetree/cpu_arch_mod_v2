@@ -51,6 +51,8 @@ public class CpuArchMod implements ModInitializer, ClientModInitializer {
     public static final Identifier PROGRAMMABLE_AGENT_OPEN_GUI_S2C_PACKET = new Identifier(MOD_ID,"prg_agent_open_s2c");
     public static final Identifier PROGRAMMABLE_AGENT_SAFE_CONFIG_C2S_PACKET = new Identifier(MOD_ID,"prg_agent_safe_c2s");
 
+    public static final Configuration CONFIGURATION = new Configuration();
+
     @Override
     public void onInitialize() {
         Registry.register(Registry.BLOCK, new Identifier(MOD_ID, "pipe"), PIPE);

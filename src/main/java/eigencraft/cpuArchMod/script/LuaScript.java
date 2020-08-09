@@ -3,9 +3,8 @@ package eigencraft.cpuArchMod.script;
 import org.luaj.vm2.*;
 import org.luaj.vm2.compiler.LuaC;
 import org.luaj.vm2.lib.*;
-import org.luaj.vm2.lib.jse.*;
-
-import java.util.Collection;
+import org.luaj.vm2.lib.jse.JseBaseLib;
+import org.luaj.vm2.lib.jse.JseMathLib;
 
 public class LuaScript {
     static Globals server_globals;
@@ -23,7 +22,7 @@ public class LuaScript {
     Globals user_globals = new Globals();
     LuaScriptWatchDog watchDog;
 
-    public void compileCode(String script, int maxTime, Collection<LuaObjectSetter> objectSetters){
+    public void compileCode(String script, int maxTime, LuaAPI api){
         user_globals = new Globals();
         user_globals.load(new JseBaseLib());
         user_globals.load(new PackageLib());
@@ -36,9 +35,7 @@ public class LuaScript {
         user_globals.load(watchDog);
         user_globals.set("debug", LuaValue.NIL);
 
-        for (LuaObjectSetter setter:objectSetters){
-            user_globals.set(setter.getName(),setter.getObject());
-        }
+        user_globals.set(api.getName(),api.asLuaValue());
 
         LuaValue chunk = server_globals.load(script, "main", user_globals);
         execute(chunk);
@@ -47,6 +44,11 @@ public class LuaScript {
     public void execute(LuaValue function) throws LuaError, WatchDogError {
         watchDog.resetTimer();
         function.call();
+    }
+
+    public void execute(LuaValue callback, LuaTable arg) {
+        watchDog.resetTimer();
+        callback.call(arg);
     }
 
     public static class LuaScriptWatchDog extends DebugLib{

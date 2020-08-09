@@ -3,42 +3,38 @@ package eigencraft.cpuArchMod.simulation.agents;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import eigencraft.cpuArchMod.script.LuaFunctionRegistry;
-import eigencraft.cpuArchMod.script.LuaObjectSetter;
+import eigencraft.cpuArchMod.CpuArchMod;
+import eigencraft.cpuArchMod.script.LuaAPI;
 import eigencraft.cpuArchMod.script.LuaScript;
 import eigencraft.cpuArchMod.simulation.SimulationAgent;
 import eigencraft.cpuArchMod.simulation.SimulationMessage;
 import net.fabricmc.loader.api.FabricLoader;
 import org.luaj.vm2.LuaError;
+import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.lib.jse.CoerceJavaToLua;
+import org.luaj.vm2.lib.TwoArgFunction;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.LinkedList;
 
-public class ProgrammableAgent implements SimulationAgent {
-    private final ArrayList<SimulationAgent> connectedObjects =   new ArrayList<>();
+public class ProgrammableAgent extends SimulationAgent {
     private LinkedList<SimulationMessage> messages = new LinkedList<>();
     LuaScript luaScript = new LuaScript();
-    LuaFunctionRegistry luaFunctionRegistry = new LuaFunctionRegistry("node");
-    boolean locked = false;
+    LuaAPI api = new LuaAPI("node");
     private String scriptFileName = "no script";
     private String scriptSrc = "";
-    ArrayList<LuaObjectSetter> luaAPIs = new ArrayList<>();
 
-    LuaFunctionRegistry.RegistryKey ON_REDSTONE_SIGNAL;
-    LuaFunctionRegistry.RegistryKey ON_MESSAGE;
+    LuaAPI.LuaCallback ON_REDSTONE_SIGNAL = new LuaAPI.LuaCallback();
+    LuaAPI.LuaCallback ON_MESSAGE = new LuaAPI.LuaCallback();
 
 
     public ProgrammableAgent(){
-        ON_REDSTONE_SIGNAL = luaFunctionRegistry.register("onRedstoneSignal");
-        ON_MESSAGE =  luaFunctionRegistry.register("onMessage");
-
-        luaAPIs.add(luaFunctionRegistry);
-
-        luaScript.compileCode("",100,luaAPIs);
+        api.register("onRedstoneSignal",ON_REDSTONE_SIGNAL);
+        api.register("onMessage",ON_MESSAGE);
+        api.register("publish",new MessagePublisher());
+        luaScript.compileCode("",CpuArchMod.CONFIGURATION.getScriptExecutionTimeout(),api);
     }
 
     public String getScriptFileName() {
@@ -55,27 +51,15 @@ public class ProgrammableAgent implements SimulationAgent {
 
     public void setScriptSrc(String scriptSrc) {
         this.scriptSrc = scriptSrc;
-        luaScript.compileCode(scriptSrc,100,luaAPIs);
-    }
-
-    public void connect(SimulationAgent other){
-        connectedObjects.add(other);
-    }
-
-    public void disconnect(SimulationAgent other){
-        connectedObjects.remove(other);
-    }
-
-    public ArrayList<SimulationAgent> getConnections(){
-        return connectedObjects;
+        luaScript.compileCode(scriptSrc, CpuArchMod.CONFIGURATION.getScriptExecutionTimeout(),api);
     }
 
     @Override
     public void tick() {
         while (!messages.isEmpty()){
-            messages.remove();
+            SimulationMessage message = messages.remove();
             try {
-                luaScript.execute(luaFunctionRegistry.getFunction(ON_MESSAGE));
+                luaScript.execute(ON_MESSAGE.getCallback(),message.getAsLuaValue());
             } catch (LuaError|LuaScript.WatchDogError error) {
                 error.printStackTrace();
             }
@@ -84,7 +68,7 @@ public class ProgrammableAgent implements SimulationAgent {
 
     public void onRedstonePowered(){
         try {
-            luaScript.execute(luaFunctionRegistry.getFunction(ON_REDSTONE_SIGNAL));
+            luaScript.execute(ON_REDSTONE_SIGNAL.getCallback());
         } catch (LuaError|LuaScript.WatchDogError error) {
             error.printStackTrace();
         }
@@ -92,7 +76,8 @@ public class ProgrammableAgent implements SimulationAgent {
 
     @Override
     public void process(SimulationMessage message) {
-        if (!locked) {
+        if (!isLocked()) {
+            this.lock();
             messages.add(message);
         }
     }
@@ -110,15 +95,25 @@ public class ProgrammableAgent implements SimulationAgent {
             JsonObject config = rawConfig.getAsJsonObject();
             String fileName = config.get("file").getAsString();
             File srcFile = new File(new File(FabricLoader.getInstance().getConfigDirectory(),"cpu_arch_mod_scripts"),fileName);
-            System.out.println(srcFile.toString());
             if (srcFile.isFile()){
                 try {
-                    scriptSrc = new String(Files.readAllBytes(srcFile.toPath()));
+                    setScriptSrc(new String(Files.readAllBytes(srcFile.toPath())));
                     scriptFileName = fileName;
                 } catch (IOException e) {
                     return;
                 }
             }
+        }
+    }
+
+    private class MessagePublisher extends TwoArgFunction{
+        @Override
+        public LuaValue call(LuaValue arg1, LuaValue arg2) {
+            if (arg2.istable()) {
+                SimulationMessage message = new SimulationMessage((LuaTable) arg2);
+                publish(message);
+            }
+            return LuaValue.NIL;
         }
     }
 }

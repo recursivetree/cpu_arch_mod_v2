@@ -1,7 +1,10 @@
 package eigencraft.cpuArchMod.block;
 
 import eigencraft.cpuArchMod.CpuArchMod;
-import eigencraft.cpuArchMod.simulation.*;
+import eigencraft.cpuArchMod.simulation.SimulationAgent;
+import eigencraft.cpuArchMod.simulation.SimulationWorld;
+import eigencraft.cpuArchMod.simulation.SimulationWorldInterface;
+import eigencraft.cpuArchMod.simulation.SimulationWorldRunnable;
 import eigencraft.cpuArchMod.simulation.agents.ProgrammableAgent;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
