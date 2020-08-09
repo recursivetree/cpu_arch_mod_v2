@@ -1,4 +1,7 @@
 {
   "gui.cpu_arch_mod.select_script": "select script",
-  "gui.cpu_arch_mod.select": "select"
+  "gui.cpu_arch_mod.select": "select",
+  "gui.cpu_arch_mod.back": "back",
+  "gui.cpu_arch_mod.open_directory": "open directory",
+  "gui.cpu_arch_mod.available_scripts": "Available scripts:"
 }

@@ -4,8 +4,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import eigencraft.cpuArchMod.CpuArchMod;
-import eigencraft.cpuArchMod.script.LuaAPI;
-import eigencraft.cpuArchMod.script.LuaScript;
+import eigencraft.cpuArchMod.lua.LuaAPI;
+import eigencraft.cpuArchMod.lua.LuaScript;
 import eigencraft.cpuArchMod.simulation.SimulationAgent;
 import eigencraft.cpuArchMod.simulation.SimulationMessage;
 import net.fabricmc.loader.api.FabricLoader;
@@ -51,7 +51,11 @@ public class ProgrammableAgent extends SimulationAgent {
 
     public void setScriptSrc(String scriptSrc) {
         this.scriptSrc = scriptSrc;
-        luaScript.compileCode(scriptSrc, CpuArchMod.CONFIGURATION.getScriptExecutionTimeout(),api);
+        try {
+            luaScript.compileCode(scriptSrc, CpuArchMod.CONFIGURATION.getScriptExecutionTimeout(), api);
+        } catch (LuaError luaError){
+            luaError.printStackTrace();
+        }
     }
 
     @Override

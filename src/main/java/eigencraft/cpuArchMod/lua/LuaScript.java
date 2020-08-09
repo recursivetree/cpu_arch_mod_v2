@@ -1,4 +1,4 @@
-package eigencraft.cpuArchMod.script;
+package eigencraft.cpuArchMod.lua;
 
 import org.luaj.vm2.*;
 import org.luaj.vm2.compiler.LuaC;
