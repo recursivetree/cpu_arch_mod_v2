@@ -1,18 +1,18 @@
 {
     "textures": {
-        "particle": "cpu_arch_mod:block/pipe",
-        "pipe": "cpu_arch_mod:block/pipe"
+        "texture":  "cpu_arch_mod:block/pipe",
+        "particle": "#texture"
     },
     "elements": [
-        {   "from": [ 5, 5, 5 ],
-            "to": [ 11, 11, 11 ],
+        {   "from": [ 4, 4, 4 ],
+            "to": [ 12, 12, 12 ],
             "faces": {
-                "down":  { "texture": "#pipe", "cullface": "down", "rotation": 90 },
-                "up":    { "texture": "#pipe", "cullface": "up"   },
-                "north": { "texture": "#pipe" },
-                "south": { "texture": "#pipe" },
-                "west":  { "texture": "#pipe" },
-                "east":  { "texture": "#pipe" }
+                "down":  { "texture": "#texture" },
+                "up":    { "texture": "#texture" },
+                "north": { "texture": "#texture" },
+                "south": { "texture": "#texture" },
+                "west":  { "texture": "#texture" },
+                "east":  { "texture": "#texture" }
             }
         }
     ]
