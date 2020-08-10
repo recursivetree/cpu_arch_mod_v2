@@ -42,7 +42,7 @@ public class PipeContainer extends ConnectingBlock implements CpuArchModBlock {
     }
 
     public PipeContainer() {
-        super(0.2f, Settings.of(Material.STONE).breakInstantly().strength(1));
+        super(0.25f, Settings.of(Material.STONE).breakInstantly().strength(1));
         setDefaultState(getDefaultState()
                 .with(UP, false)
                 .with(DOWN, false)
