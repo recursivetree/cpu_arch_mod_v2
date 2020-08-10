@@ -8,6 +8,7 @@ import org.luaj.vm2.lib.jse.JseMathLib;
 
 public class LuaScript {
     static Globals server_globals;
+
     static {
         server_globals = new Globals();
         server_globals.load(new JseBaseLib());
@@ -22,7 +23,7 @@ public class LuaScript {
     Globals user_globals = new Globals();
     LuaScriptWatchDog watchDog;
 
-    public void compileCode(String script, int maxTime, LuaAPI api){
+    public void compileCode(String script, int maxTime, LuaAPI api) {
         user_globals = new Globals();
         user_globals.load(new JseBaseLib());
         user_globals.load(new PackageLib());
@@ -35,7 +36,7 @@ public class LuaScript {
         user_globals.load(watchDog);
         user_globals.set("debug", LuaValue.NIL);
 
-        user_globals.set(api.getName(),api.asLuaValue());
+        user_globals.set(api.getName(), api.asLuaValue());
 
         LuaValue chunk = server_globals.load(script, "main", user_globals);
         execute(chunk);
@@ -51,18 +52,18 @@ public class LuaScript {
         callback.call(arg);
     }
 
-    public static class LuaScriptWatchDog extends DebugLib{
-        private long startTime = System.currentTimeMillis();
+    public static class LuaScriptWatchDog extends DebugLib {
         int maxTime;
+        private long startTime = System.currentTimeMillis();
 
-        public LuaScriptWatchDog(int maxTime){
+        public LuaScriptWatchDog(int maxTime) {
             this.maxTime = maxTime;
         }
 
         @Override
-        public void onInstruction(int pc, Varargs v, int top){
-            if (System.currentTimeMillis()-startTime>maxTime){
-                throw new WatchDogError(String.format("Callback took longer than %d ms",maxTime));
+        public void onInstruction(int pc, Varargs v, int top) {
+            if (System.currentTimeMillis() - startTime > maxTime) {
+                throw new WatchDogError(String.format("Callback took longer than %d ms", maxTime));
             }
         }
 
@@ -71,7 +72,7 @@ public class LuaScript {
         }
     }
 
-    public static class WatchDogError extends Error{
+    public static class WatchDogError extends Error {
         public WatchDogError(String format) {
             super(format);
         }

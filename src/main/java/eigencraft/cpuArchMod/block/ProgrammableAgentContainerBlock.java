@@ -36,11 +36,11 @@ public class ProgrammableAgentContainerBlock extends Block implements CpuArchMod
 
     @Override
     public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack itemStack) {
-        if (!world.isClient()){
-            ((SimulationWorldInterface)world).addSimulationWorldTask(new SimulationWorldRunnable() {
+        if (!world.isClient()) {
+            ((SimulationWorldInterface) world).addSimulationWorldTask(new SimulationWorldRunnable() {
                 @Override
                 public void run(SimulationWorld world) {
-                    world.addSimulationAgent(pos,new ProgrammableAgent());
+                    world.addSimulationAgent(pos, new ProgrammableAgent());
                 }
             });
         }
@@ -48,8 +48,8 @@ public class ProgrammableAgentContainerBlock extends Block implements CpuArchMod
 
     @Override
     public void onBroken(WorldAccess world, BlockPos pos, BlockState state) {
-        if (!world.isClient()){
-            ((SimulationWorldInterface)world).addSimulationWorldTask(new SimulationWorldRunnable() {
+        if (!world.isClient()) {
+            ((SimulationWorldInterface) world).addSimulationWorldTask(new SimulationWorldRunnable() {
                 @Override
                 public void run(SimulationWorld world) {
                     world.removeSimulationAgent(pos);
@@ -60,18 +60,18 @@ public class ProgrammableAgentContainerBlock extends Block implements CpuArchMod
 
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if (!world.isClient){
+        if (!world.isClient) {
             ((SimulationWorldInterface) world).addSimulationWorldTask(new SimulationWorldRunnable() {
                 @Override
                 public void run(SimulationWorld world) {
                     SimulationAgent rawAgent = world.getSimulationAgent(pos);
-                    if (rawAgent instanceof ProgrammableAgent){
-                        ProgrammableAgent agent = (ProgrammableAgent)rawAgent;
+                    if (rawAgent instanceof ProgrammableAgent) {
+                        ProgrammableAgent agent = (ProgrammableAgent) rawAgent;
                         PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
                         passedData.writeBlockPos(pos);
                         passedData.writeString(agent.getScriptFileName());
                         passedData.writeString(agent.getScriptSrc());
-                        ServerSidePacketRegistry.INSTANCE.sendToPlayer(player, CpuArchMod.PROGRAMMABLE_AGENT_OPEN_GUI_S2C_PACKET,passedData);
+                        ServerSidePacketRegistry.INSTANCE.sendToPlayer(player, CpuArchMod.PROGRAMMABLE_AGENT_OPEN_GUI_S2C_PACKET, passedData);
                     }
                 }
             });
@@ -84,7 +84,7 @@ public class ProgrammableAgentContainerBlock extends Block implements CpuArchMod
         if (!world.isClient) {
             boolean isPowered = world.isReceivingRedstonePower(pos);
             if (state.get(POWERED) != isPowered) {
-                world.setBlockState(pos,state.with(POWERED,isPowered));
+                world.setBlockState(pos, state.with(POWERED, isPowered));
                 if (isPowered) {
                     ((SimulationWorldInterface) world).addSimulationWorldTask(new SimulationWorldRunnable() {
                         @Override

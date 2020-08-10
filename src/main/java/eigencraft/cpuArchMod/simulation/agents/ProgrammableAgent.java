@@ -8,72 +8,68 @@ import eigencraft.cpuArchMod.lua.LuaAPI;
 import eigencraft.cpuArchMod.lua.LuaScript;
 import eigencraft.cpuArchMod.simulation.SimulationAgent;
 import eigencraft.cpuArchMod.simulation.SimulationMessage;
-import net.fabricmc.loader.api.FabricLoader;
 import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.TwoArgFunction;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.LinkedList;
 
 public class ProgrammableAgent extends SimulationAgent {
-    private LinkedList<SimulationMessage> messages = new LinkedList<>();
     LuaScript luaScript = new LuaScript();
     LuaAPI api = new LuaAPI("node");
-    private String scriptFileName = "no script";
-    private String scriptSrc = "";
-
     LuaAPI.LuaCallback ON_REDSTONE_SIGNAL = new LuaAPI.LuaCallback();
     LuaAPI.LuaCallback ON_MESSAGE = new LuaAPI.LuaCallback();
+    private final LinkedList<SimulationMessage> messages = new LinkedList<>();
+    private String scriptFileName = "unconfigured";
+    private String scriptSrc = "";
 
 
-    public ProgrammableAgent(){
-        api.register("onRedstoneSignal",ON_REDSTONE_SIGNAL);
-        api.register("onMessage",ON_MESSAGE);
-        api.register("publish",new MessagePublisher());
-        luaScript.compileCode("",CpuArchMod.CONFIGURATION.getScriptExecutionTimeout(),api);
+    public ProgrammableAgent() {
+        api.register("onRedstoneSignal", ON_REDSTONE_SIGNAL);
+        api.register("onMessage", ON_MESSAGE);
+        api.register("publish", new MessagePublisher());
+        luaScript.compileCode("", CpuArchMod.CONFIGURATION.getScriptExecutionTimeout(), api);
     }
 
     public String getScriptFileName() {
         return scriptFileName;
     }
 
-    public String getScriptSrc() {
-        return scriptSrc;
-    }
-
     public void setScriptFileName(String scriptFileName) {
         this.scriptFileName = scriptFileName;
+    }
+
+    public String getScriptSrc() {
+        return scriptSrc;
     }
 
     public void setScriptSrc(String scriptSrc) {
         this.scriptSrc = scriptSrc;
         try {
             luaScript.compileCode(scriptSrc, CpuArchMod.CONFIGURATION.getScriptExecutionTimeout(), api);
-        } catch (LuaError luaError){
+        } catch (LuaError luaError) {
             luaError.printStackTrace();
         }
     }
 
     @Override
     public void tick() {
-        while (!messages.isEmpty()){
+        while (!messages.isEmpty()) {
             SimulationMessage message = messages.remove();
             try {
-                luaScript.execute(ON_MESSAGE.getCallback(),message.getAsLuaValue());
-            } catch (LuaError|LuaScript.WatchDogError error) {
+                luaScript.execute(ON_MESSAGE.getCallback(), message.getAsLuaValue());
+            } catch (LuaError | LuaScript.WatchDogError error) {
                 error.printStackTrace();
             }
         }
     }
 
-    public void onRedstonePowered(){
+    public void onRedstonePowered() {
         try {
             luaScript.execute(ON_REDSTONE_SIGNAL.getCallback());
-        } catch (LuaError|LuaScript.WatchDogError error) {
+        } catch (LuaError | LuaScript.WatchDogError error) {
             error.printStackTrace();
         }
     }
@@ -89,28 +85,28 @@ public class ProgrammableAgent extends SimulationAgent {
     @Override
     public JsonElement getConfigData() {
         JsonObject root = new JsonObject();
-        root.add("file",new JsonPrimitive(scriptFileName));
+        root.add("file", new JsonPrimitive(scriptFileName));
         return root;
     }
 
     @Override
     public void loadConfig(JsonElement rawConfig) {
-        if (rawConfig.isJsonObject()){
+        if (rawConfig.isJsonObject()) {
             JsonObject config = rawConfig.getAsJsonObject();
             String fileName = config.get("file").getAsString();
-            File srcFile = new File(new File(FabricLoader.getInstance().getConfigDirectory(),"cpu_arch_mod_scripts"),fileName);
-            if (srcFile.isFile()){
+            if (!fileName.equals("unconfigured")) {
                 try {
-                    setScriptSrc(new String(Files.readAllBytes(srcFile.toPath())));
+                    setScriptSrc(CpuArchMod.SCRIPT_MANAGER.readFile(fileName));
                     scriptFileName = fileName;
                 } catch (IOException e) {
+                    e.printStackTrace();
                     return;
                 }
             }
         }
     }
 
-    private class MessagePublisher extends TwoArgFunction{
+    private class MessagePublisher extends TwoArgFunction {
         @Override
         public LuaValue call(LuaValue arg1, LuaValue arg2) {
             if (arg2.istable()) {

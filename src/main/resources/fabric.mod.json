@@ -22,7 +22,7 @@
       "eigencraft.cpuArchMod.CpuArchMod"
     ],
     "client": [
-      "eigencraft.cpuArchMod.CpuArchMod"
+      "eigencraft.cpuArchMod.CpuArchModClient"
     ]
   },
   "mixins": [

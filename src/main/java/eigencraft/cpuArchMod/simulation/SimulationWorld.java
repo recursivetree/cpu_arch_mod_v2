@@ -10,12 +10,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-public class SimulationWorld implements Runnable{
-    private Thread simulationThread;
-    private ServerWorld world;
-    private File saveDirectory;
-    private final HashMap<ChunkPos,SimulationChunk> loadedChunks = new HashMap();
-    private volatile LinkedList<SimulationWorldRunnable> tasks = new LinkedList<>();
+public class SimulationWorld implements Runnable {
+    private final HashMap<ChunkPos, SimulationChunk> loadedChunks = new HashMap();
+    private final Thread simulationThread;
+    private final ServerWorld world;
+    private final File saveDirectory;
+    private final LinkedList<SimulationWorldRunnable> tasks = new LinkedList<>();
     private boolean running = true;
 
     public SimulationWorld(File cpu_sim_directory, ServerWorld serverWorld) {
@@ -26,24 +26,24 @@ public class SimulationWorld implements Runnable{
         simulationThread.start();
     }
 
-    public SimulationChunk getChunk(ChunkPos chunkPos){
-        if (!loadedChunks.containsKey(chunkPos)){
+    public SimulationChunk getChunk(ChunkPos chunkPos) {
+        if (!loadedChunks.containsKey(chunkPos)) {
             SimulationChunk newChunk = new SimulationChunk(this);
-            loadedChunks.put(chunkPos,newChunk);
-            SimulationChunkStorage.loadChunk(chunkPos,newChunk,saveDirectory);
+            loadedChunks.put(chunkPos, newChunk);
+            SimulationChunkStorage.loadChunk(chunkPos, newChunk, saveDirectory);
         }
         return loadedChunks.get(chunkPos);
     }
 
-    public SimulationChunk getChunk(BlockPos pos){
+    public SimulationChunk getChunk(BlockPos pos) {
         return getChunk(new ChunkPos(pos));
     }
 
-    public void addSimulationAgent(BlockPos pos, SimulationAgent simulationAgent){
+    public void addSimulationAgent(BlockPos pos, SimulationAgent simulationAgent) {
         getChunk(pos).addAgent(pos, simulationAgent);
     }
 
-    public void removeSimulationAgent(BlockPos pos){
+    public void removeSimulationAgent(BlockPos pos) {
         getChunk(pos).removeConnectable(pos);
     }
 
@@ -56,24 +56,24 @@ public class SimulationWorld implements Runnable{
                     tasks.remove().run(this);
                 }
             }
-            for (SimulationChunk chunk:loadedChunks.values()){
+            for (SimulationChunk chunk : loadedChunks.values()) {
                 chunk.tick();
             }
-            if (System.currentTimeMillis()-lastSave>60000){
+            if (System.currentTimeMillis() - lastSave > 60000) {
                 saveWorld();
             }
         }
         saveWorld();
     }
 
-    public void saveWorld(){
-        for (Map.Entry<ChunkPos, SimulationChunk> chunk:loadedChunks.entrySet()){
-            if (chunk.getValue().shouldSave()){
-                SimulationChunkStorage.saveChunk(chunk.getKey(),chunk.getValue(),saveDirectory);
+    public void saveWorld() {
+        for (Map.Entry<ChunkPos, SimulationChunk> chunk : loadedChunks.entrySet()) {
+            if (chunk.getValue().shouldSave()) {
+                SimulationChunkStorage.saveChunk(chunk.getKey(), chunk.getValue(), saveDirectory);
             } else {
                 try {
                     SimulationChunkStorage.getChunkSavePath(chunk.getKey(), saveDirectory).delete();
-                } catch (IOError e){
+                } catch (IOError e) {
                     e.printStackTrace();
                 }
             }

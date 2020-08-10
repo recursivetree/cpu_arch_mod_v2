@@ -14,27 +14,27 @@ import java.util.Map;
 public class SimulationChunkStorage {
     public static final int version = 1;
 
-    public static void saveChunk(ChunkPos pos, SimulationChunk chunk,File worldSavePath){
+    public static void saveChunk(ChunkPos pos, SimulationChunk chunk, File worldSavePath) {
         JsonObject root = new JsonObject();
-        root.add("version",new JsonPrimitive(version));
+        root.add("version", new JsonPrimitive(version));
 
         JsonArray simulationAgents = new JsonArray();
-        root.add("agents",simulationAgents);
+        root.add("agents", simulationAgents);
 
-        for(Map.Entry<BlockPos, SimulationAgent> simulationAgent:chunk.getSimulationAgents().entrySet()){
+        for (Map.Entry<BlockPos, SimulationAgent> simulationAgent : chunk.getSimulationAgents().entrySet()) {
             JsonObject simulationAgentJson = new JsonObject();
-            simulationAgentJson.add("x",new JsonPrimitive(simulationAgent.getKey().getX()));
-            simulationAgentJson.add("y",new JsonPrimitive(simulationAgent.getKey().getY()));
-            simulationAgentJson.add("z",new JsonPrimitive(simulationAgent.getKey().getZ()));
-            simulationAgentJson.add("type",new JsonPrimitive(simulationAgent.getValue().getClass().getSimpleName()));
+            simulationAgentJson.add("x", new JsonPrimitive(simulationAgent.getKey().getX()));
+            simulationAgentJson.add("y", new JsonPrimitive(simulationAgent.getKey().getY()));
+            simulationAgentJson.add("z", new JsonPrimitive(simulationAgent.getKey().getZ()));
+            simulationAgentJson.add("type", new JsonPrimitive(simulationAgent.getValue().getClass().getSimpleName()));
             JsonElement customData = simulationAgent.getValue().getConfigData();
-            if (customData!=null){
-                simulationAgentJson.add("data",customData);
+            if (customData != null) {
+                simulationAgentJson.add("data", customData);
             }
             simulationAgents.add(simulationAgentJson);
         }
 
-        File chunkFile = getChunkSavePath(pos,worldSavePath);
+        File chunkFile = getChunkSavePath(pos, worldSavePath);
 
         try {
             FileWriter writer = new FileWriter(chunkFile);
@@ -45,10 +45,11 @@ public class SimulationChunkStorage {
         }
 
     }
-    public static void loadChunk(ChunkPos pos,SimulationChunk chunk, File worldSavePath){
-        File savePath = getChunkSavePath(pos,worldSavePath);
 
-        if (savePath.isFile()){
+    public static void loadChunk(ChunkPos pos, SimulationChunk chunk, File worldSavePath) {
+        File savePath = getChunkSavePath(pos, worldSavePath);
+
+        if (savePath.isFile()) {
             JsonObject root;
             try {
                 root = JsonParser.parseString(new String(Files.readAllBytes(savePath.toPath()))).getAsJsonObject();
@@ -59,11 +60,11 @@ public class SimulationChunkStorage {
 
             try {
                 int found_version = root.get("version").getAsInt();
-                if (found_version > version){
+                if (found_version > version) {
                     LogManager.getLogger().warn("Found simulation chunk from newer mod version!");
-                } else if (found_version < version){
+                } else if (found_version < version) {
                     //TODO upgrade system?
-                    LogManager.getLogger().warn(String.format("Found simulation chunk from older mod version! Found: %d, running version: %d",found_version,version));
+                    LogManager.getLogger().warn(String.format("Found simulation chunk from older mod version! Found: %d, running version: %d", found_version, version));
                 }
 
                 JsonArray simulationAgents = root.getAsJsonArray("agents");
@@ -71,18 +72,19 @@ public class SimulationChunkStorage {
                     JsonObject agentElement = i.getAsJsonObject();
                     BlockPos agentPos = new BlockPos(agentElement.get("x").getAsInt(), agentElement.get("y").getAsInt(), agentElement.get("z").getAsInt());
                     SimulationAgent simulationAgent = SimulationAgent.getSimulationObject(agentElement.get("type").getAsString());
-                    if (agentElement.has("data")){
+                    if (agentElement.has("data")) {
                         simulationAgent.loadConfig(agentElement.get("data"));
                     }
                     chunk.addAgent(agentPos, simulationAgent);
                 }
-            } catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
         }
     }
-    public static File getChunkSavePath(ChunkPos pos, File worldSavePath){
-        return new File(worldSavePath,String.format("x%dz%d.json",pos.x,pos.z));
+
+    public static File getChunkSavePath(ChunkPos pos, File worldSavePath) {
+        return new File(worldSavePath, String.format("x%dz%d.json", pos.x, pos.z));
     }
 }

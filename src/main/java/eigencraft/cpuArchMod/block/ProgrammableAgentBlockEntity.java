@@ -1,7 +1,6 @@
 package eigencraft.cpuArchMod.block;
 
 import eigencraft.cpuArchMod.CpuArchMod;
-import io.github.cottonmc.cotton.gui.client.LibGuiClient;
 import io.github.cottonmc.cotton.gui.widget.data.Color;
 import net.fabricmc.fabric.api.block.entity.BlockEntityClientSerializable;
 import net.minecraft.block.BlockState;
@@ -25,7 +24,7 @@ public class ProgrammableAgentBlockEntity extends BlockEntity implements BlockEn
         markDirty();
     }
 
-    public void setAppearance(String name,int color){
+    public void setAppearance(String name, int color) {
         this.displayName = name;
         this.textColor = color;
         sync();
@@ -40,22 +39,22 @@ public class ProgrammableAgentBlockEntity extends BlockEntity implements BlockEn
 
     @Override
     public CompoundTag toClientTag(CompoundTag compoundTag) {
-        compoundTag.putString("displayName",displayName);
-        compoundTag.putInt("textColor",textColor);
+        compoundTag.putString("displayName", displayName);
+        compoundTag.putInt("textColor", textColor);
         return compoundTag;
     }
 
     @Override
     public CompoundTag toTag(CompoundTag tag) {
         super.toTag(tag);
-        tag.putString("displayName",displayName);
-        tag.putInt("textColor",textColor);
+        tag.putString("displayName", displayName);
+        tag.putInt("textColor", textColor);
         return tag;
     }
 
     @Override
     public void fromTag(BlockState state, CompoundTag tag) {
-        super.fromTag(state,tag);
+        super.fromTag(state, tag);
         displayName = tag.getString("displayName");
         textColor = tag.getInt("textColor");
         System.out.println("loaded");
@@ -69,7 +68,7 @@ public class ProgrammableAgentBlockEntity extends BlockEntity implements BlockEn
         }
     }
 
-    public static class ProgrammableAgentRenderer extends BlockEntityRenderer<ProgrammableAgentBlockEntity>{
+    public static class ProgrammableAgentRenderer extends BlockEntityRenderer<ProgrammableAgentBlockEntity> {
 
         public ProgrammableAgentRenderer(BlockEntityRenderDispatcher dispatcher) {
             super(dispatcher);

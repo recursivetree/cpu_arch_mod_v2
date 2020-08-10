@@ -7,22 +7,31 @@ import java.util.HashMap;
 import java.util.function.Supplier;
 
 public abstract class SimulationAgent {
-    private final ArrayList<SimulationAgent> connectedAgents =   new ArrayList<>();
+    static HashMap<String, Supplier<SimulationAgent>> constructors = new HashMap<>();
+    private final ArrayList<SimulationAgent> connectedAgents = new ArrayList<>();
     private boolean blocked = false;
 
-    public void connect(SimulationAgent other){
+    public static void register(String name, Supplier<SimulationAgent> constructor) {
+        constructors.put(name, constructor);
+    }
+
+    public static SimulationAgent getSimulationObject(String name) {
+        return constructors.get(name).get();
+    }
+
+    public void connect(SimulationAgent other) {
         connectedAgents.add(other);
     }
 
-    public void disconnect(SimulationAgent other){
+    public void disconnect(SimulationAgent other) {
         connectedAgents.remove(other);
     }
 
-    public ArrayList<SimulationAgent> getConnections(){
+    public ArrayList<SimulationAgent> getConnections() {
         return connectedAgents;
     }
 
-    public void publish(SimulationMessage message){
+    public void publish(SimulationMessage message) {
         if (!blocked) {
             lock();
             for (SimulationAgent agent : connectedAgents) {
@@ -32,7 +41,7 @@ public abstract class SimulationAgent {
         }
     }
 
-    public void unlock(){
+    public void unlock() {
         if (blocked) {
             blocked = false;
             for (SimulationAgent agent : connectedAgents) {
@@ -40,25 +49,21 @@ public abstract class SimulationAgent {
             }
         }
     }
-    public void lock(){
+
+    public void lock() {
         blocked = true;
     }
-    public boolean isLocked(){
+
+    public boolean isLocked() {
         return blocked;
     }
 
-
     public abstract void tick();
-    public abstract void process(SimulationMessage message);
-    public abstract JsonElement getConfigData();
-    public abstract void loadConfig(JsonElement config);
 
-    static HashMap<String, Supplier<SimulationAgent>> constructors = new HashMap<>();
-    public static void register(String name,Supplier<SimulationAgent> constructor){
-        constructors.put(name,constructor);
-    }
-    public static SimulationAgent getSimulationObject(String name){
-        return constructors.get(name).get();
-    }
+    public abstract void process(SimulationMessage message);
+
+    public abstract JsonElement getConfigData();
+
+    public abstract void loadConfig(JsonElement config);
 
 }

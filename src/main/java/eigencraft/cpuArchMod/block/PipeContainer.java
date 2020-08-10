@@ -31,30 +31,39 @@ public class PipeContainer extends ConnectingBlock implements CpuArchModBlock {
     private static final BooleanProperty WEST;
     private static final Map<Direction, BooleanProperty> FACING_PROPERTIES;
 
+    static {
+        NORTH = ConnectingBlock.NORTH;
+        EAST = ConnectingBlock.EAST;
+        SOUTH = ConnectingBlock.SOUTH;
+        WEST = ConnectingBlock.WEST;
+        UP = ConnectingBlock.UP;
+        DOWN = ConnectingBlock.DOWN;
+        FACING_PROPERTIES = ConnectingBlock.FACING_PROPERTIES;
+    }
 
     public PipeContainer() {
-        super(0.2f,Settings.of(Material.STONE).breakInstantly().strength(1));
+        super(0.2f, Settings.of(Material.STONE).breakInstantly().strength(1));
         setDefaultState(getDefaultState()
                 .with(UP, false)
-                .with(DOWN,false)
-                .with(EAST,false)
-                .with(WEST,false)
-                .with(NORTH,false)
-                .with(SOUTH,false)
+                .with(DOWN, false)
+                .with(EAST, false)
+                .with(WEST, false)
+                .with(NORTH, false)
+                .with(SOUTH, false)
         );
     }
 
-    private boolean shouldConnect(BlockState state){
+    private boolean shouldConnect(BlockState state) {
         return state.getBlock() instanceof CpuArchModBlock;
     }
 
     @Override
     public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack itemStack) {
-        if (!world.isClient()){
-            ((SimulationWorldInterface)world).addSimulationWorldTask(new SimulationWorldRunnable() {
+        if (!world.isClient()) {
+            ((SimulationWorldInterface) world).addSimulationWorldTask(new SimulationWorldRunnable() {
                 @Override
                 public void run(SimulationWorld world) {
-                    world.addSimulationAgent(pos,new PipeAgent());
+                    world.addSimulationAgent(pos, new PipeAgent());
                 }
             });
         }
@@ -62,8 +71,8 @@ public class PipeContainer extends ConnectingBlock implements CpuArchModBlock {
 
     @Override
     public void onBroken(WorldAccess world, BlockPos pos, BlockState state) {
-        if (!world.isClient()){
-            ((SimulationWorldInterface)world).addSimulationWorldTask(new SimulationWorldRunnable() {
+        if (!world.isClient()) {
+            ((SimulationWorldInterface) world).addSimulationWorldTask(new SimulationWorldRunnable() {
                 @Override
                 public void run(SimulationWorld world) {
                     world.removeSimulationAgent(pos);
@@ -88,31 +97,21 @@ public class PipeContainer extends ConnectingBlock implements CpuArchModBlock {
         BlockPos pos = ctx.getBlockPos();
         return getDefaultState()
                 .with(UP, shouldConnect(world.getBlockState(pos.up())))
-                .with(DOWN,shouldConnect(world.getBlockState(pos.down())))
-                .with(EAST,shouldConnect(world.getBlockState(pos.east())))
-                .with(WEST,shouldConnect(world.getBlockState(pos.west())))
-                .with(NORTH,shouldConnect(world.getBlockState(pos.north())))
-                .with(SOUTH,shouldConnect(world.getBlockState(pos.south())));
+                .with(DOWN, shouldConnect(world.getBlockState(pos.down())))
+                .with(EAST, shouldConnect(world.getBlockState(pos.east())))
+                .with(WEST, shouldConnect(world.getBlockState(pos.west())))
+                .with(NORTH, shouldConnect(world.getBlockState(pos.north())))
+                .with(SOUTH, shouldConnect(world.getBlockState(pos.south())));
     }
 
     @Override
     public BlockState getStateForNeighborUpdate(BlockState state, Direction direction, BlockState newState, WorldAccess world, BlockPos pos, BlockPos posFrom) {
         return state
                 .with(UP, shouldConnect(world.getBlockState(pos.up())))
-                .with(DOWN,shouldConnect(world.getBlockState(pos.down())))
-                .with(EAST,shouldConnect(world.getBlockState(pos.east())))
-                .with(WEST,shouldConnect(world.getBlockState(pos.west())))
-                .with(NORTH,shouldConnect(world.getBlockState(pos.north())))
-                .with(SOUTH,shouldConnect(world.getBlockState(pos.south())));
-    }
-
-    static {
-        NORTH = ConnectingBlock.NORTH;
-        EAST = ConnectingBlock.EAST;
-        SOUTH = ConnectingBlock.SOUTH;
-        WEST = ConnectingBlock.WEST;
-        UP = ConnectingBlock.UP;
-        DOWN = ConnectingBlock.DOWN;
-        FACING_PROPERTIES = ConnectingBlock.FACING_PROPERTIES;
+                .with(DOWN, shouldConnect(world.getBlockState(pos.down())))
+                .with(EAST, shouldConnect(world.getBlockState(pos.east())))
+                .with(WEST, shouldConnect(world.getBlockState(pos.west())))
+                .with(NORTH, shouldConnect(world.getBlockState(pos.north())))
+                .with(SOUTH, shouldConnect(world.getBlockState(pos.south())));
     }
 }

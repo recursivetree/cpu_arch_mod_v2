@@ -5,9 +5,9 @@ import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.TwoArgFunction;
 
-public class LuaAPI{
+public class LuaAPI {
     LuaTable table = new LuaTable();
-    private String name;
+    private final String name;
 
     public LuaAPI(String name) {
         this.name = name;
@@ -21,16 +21,16 @@ public class LuaAPI{
         return table;
     }
 
-    public void register(String name,LuaValue value){
-        table.set(LuaString.valueOf(name),value);
+    public void register(String name, LuaValue value) {
+        table.set(LuaString.valueOf(name), value);
     }
 
     public static class LuaCallback extends TwoArgFunction {
+        private LuaValue callback = LuaValue.NIL;
+
         public LuaValue getCallback() {
             return callback;
         }
-
-        private LuaValue callback = LuaValue.NIL;
 
         @Override
         public LuaValue call(LuaValue arg, LuaValue arg2) {
