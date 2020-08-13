@@ -27,6 +27,8 @@ bin/
 # fabric
 
 run/
+remappedSrc/
+*.log
 
 #mac
 .DS_Store
