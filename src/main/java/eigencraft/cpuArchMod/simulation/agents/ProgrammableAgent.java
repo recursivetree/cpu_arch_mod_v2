@@ -8,6 +8,8 @@ import eigencraft.cpuArchMod.lua.LuaAPI;
 import eigencraft.cpuArchMod.lua.LuaScript;
 import eigencraft.cpuArchMod.simulation.SimulationAgent;
 import eigencraft.cpuArchMod.simulation.SimulationMessage;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
@@ -17,6 +19,8 @@ import java.io.IOException;
 import java.util.LinkedList;
 
 public class ProgrammableAgent extends SimulationAgent {
+    private static final Logger LOGGER = LogManager.getLogger(CpuArchMod.MOD_ID);
+
     LuaScript luaScript = new LuaScript();
     LuaAPI api = new LuaAPI("node");
     LuaAPI.LuaCallback ON_REDSTONE_SIGNAL = new LuaAPI.LuaCallback();
@@ -30,7 +34,7 @@ public class ProgrammableAgent extends SimulationAgent {
         api.register("onRedstoneSignal", ON_REDSTONE_SIGNAL);
         api.register("onMessage", ON_MESSAGE);
         api.register("publish", new MessagePublisher());
-        luaScript.compileCode("", CpuArchMod.CONFIGURATION.getScriptExecutionTimeout(), api);
+        luaScript.compileCode("", CpuArchMod.CONFIGURATION.getScriptExecutionTimeout(), api,"default");
     }
 
     public String getScriptFileName() {
@@ -48,7 +52,7 @@ public class ProgrammableAgent extends SimulationAgent {
     public void setScriptSrc(String scriptSrc) {
         this.scriptSrc = scriptSrc;
         try {
-            luaScript.compileCode(scriptSrc, CpuArchMod.CONFIGURATION.getScriptExecutionTimeout(), api);
+            luaScript.compileCode(scriptSrc, CpuArchMod.CONFIGURATION.getScriptExecutionTimeout(), api, scriptFileName);
         } catch (LuaError luaError) {
             luaError.printStackTrace();
         }
@@ -98,8 +102,8 @@ public class ProgrammableAgent extends SimulationAgent {
                 try {
                     setScriptSrc(CpuArchMod.SCRIPT_MANAGER.readFile(fileName));
                     scriptFileName = fileName;
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (IOException  | NullPointerException e) {
+                    LOGGER.error(String.format("Failed to load file %s: %s",fileName,e));
                     return;
                 }
             }

@@ -23,7 +23,7 @@ public class LuaScript {
     Globals user_globals = new Globals();
     LuaScriptWatchDog watchDog;
 
-    public void compileCode(String script, int maxTime, LuaAPI api) {
+    public void compileCode(String script, int maxTime, LuaAPI api, String chunkName) {
         user_globals = new Globals();
         user_globals.load(new JseBaseLib());
         user_globals.load(new PackageLib());
@@ -38,7 +38,7 @@ public class LuaScript {
 
         user_globals.set(api.getName(), api.asLuaValue());
 
-        LuaValue chunk = server_globals.load(script, "main", user_globals);
+        LuaValue chunk = server_globals.load(script, chunkName, user_globals);
         execute(chunk);
     }
 

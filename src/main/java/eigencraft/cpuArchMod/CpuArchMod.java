@@ -11,8 +11,8 @@ import eigencraft.cpuArchMod.simulation.agents.PipeAgent;
 import eigencraft.cpuArchMod.simulation.agents.ProgrammableAgent;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder;
-import net.fabricmc.fabric.api.event.server.ServerStartCallback;
-import net.fabricmc.fabric.api.event.server.ServerStopCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.entity.BlockEntity;
@@ -21,7 +21,6 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.WorldSavePath;
@@ -72,19 +71,19 @@ public class CpuArchMod implements ModInitializer {
         PROGRAMMABLE_AGENT_BLOCK_ENTITY = Registry.register(Registry.BLOCK_ENTITY_TYPE, "cpu_arch_mod:node_block_entity", BlockEntityType.Builder.create(ProgrammableAgentBlockEntity::new, PROGRAMMABLE_NODE).build(null));
 
         //Shutdown callback
-        ServerStopCallback.EVENT.register(minecraftServer -> {
+        ServerLifecycleEvents.SERVER_STOPPING.register(minecraftServer -> {
             for (ServerWorld world : minecraftServer.getWorlds()) {
                 ((SimulationWorldInterface) world).stopSimulation();
             }
         });
 
         //Setup server script manager
-        ServerStartCallback.EVENT.register(new ServerStartCallback() {
-            @Override
-            public void onStartServer(MinecraftServer minecraftServer) {
-                SCRIPT_MANAGER = new ServerScriptManager(new File(minecraftServer.getSavePath(WorldSavePath.ROOT).toFile(),"cpu_arch_mod_scripts"));
-            }
-        });
+        ServerLifecycleEvents.SERVER_STARTING.register(minecraftServer -> SCRIPT_MANAGER = new ServerScriptManager(new File(minecraftServer.getSavePath(WorldSavePath.ROOT).toFile(),"cpu_arch_mod_scripts")));
+
+
+        ServerChunkEvents.CHUNK_LOAD.register((serverWorld, worldChunk) -> ((SimulationWorldInterface)serverWorld).addSimulationWorldTask(world -> world.persistentLoadChunk(worldChunk.getPos())));
+
+        ServerChunkEvents.CHUNK_UNLOAD.register((serverWorld, worldChunk) -> ((SimulationWorldInterface)serverWorld).addSimulationWorldTask(world -> world.markChunkUnloadable(worldChunk.getPos())));
 
         //Register simulation agents
         SimulationAgent.register(ProgrammableAgent.class.getSimpleName(), ProgrammableAgent::new);

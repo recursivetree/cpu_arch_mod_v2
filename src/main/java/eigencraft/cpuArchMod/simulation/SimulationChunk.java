@@ -7,6 +7,15 @@ import java.util.HashMap;
 public class SimulationChunk {
     SimulationWorld simulation;
     private final HashMap<BlockPos, SimulationAgent> simulationAgents = new HashMap<>();
+    private boolean persistent = false;
+
+    public void makePersistent(){
+        persistent = true;
+    }
+
+    public void makeUnloadable(){
+        persistent = false;
+    }
 
     public SimulationChunk(SimulationWorld simulation) {
         this.simulation = simulation;
@@ -58,5 +67,9 @@ public class SimulationChunk {
             //Use special tick for cleaner sub class implementation of SimulationAgent
             agent.tick();
         }
+    }
+
+    public boolean isPersistent() {
+        return persistent;
     }
 }
