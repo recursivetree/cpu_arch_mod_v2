@@ -57,7 +57,6 @@ public class ProgrammableAgentBlockEntity extends BlockEntity implements BlockEn
         super.fromTag(state, tag);
         displayName = tag.getString("displayName");
         textColor = tag.getInt("textColor");
-        System.out.println("loaded");
     }
 
     @Override
