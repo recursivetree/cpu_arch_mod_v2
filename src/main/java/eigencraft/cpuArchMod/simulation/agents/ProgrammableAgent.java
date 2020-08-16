@@ -6,7 +6,7 @@ import com.google.gson.JsonPrimitive;
 import eigencraft.cpuArchMod.CpuArchMod;
 import eigencraft.cpuArchMod.lua.LuaAPI;
 import eigencraft.cpuArchMod.lua.LuaScript;
-import eigencraft.cpuArchMod.simulation.SimulationAgent;
+import eigencraft.cpuArchMod.simulation.DynamicAgent;
 import eigencraft.cpuArchMod.simulation.SimulationMessage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,14 +18,13 @@ import org.luaj.vm2.lib.TwoArgFunction;
 import java.io.IOException;
 import java.util.LinkedList;
 
-public class ProgrammableAgent extends SimulationAgent {
+public class ProgrammableAgent extends DynamicAgent {
     private static final Logger LOGGER = LogManager.getLogger(CpuArchMod.MOD_ID);
 
     LuaScript luaScript = new LuaScript();
     LuaAPI api = new LuaAPI("node");
     LuaAPI.LuaCallback ON_REDSTONE_SIGNAL = new LuaAPI.LuaCallback();
     LuaAPI.LuaCallback ON_MESSAGE = new LuaAPI.LuaCallback();
-    private final LinkedList<SimulationMessage> messages = new LinkedList<>();
     private String scriptFileName = "unconfigured";
     private String scriptSrc = "";
     private String lastError = null;
@@ -68,19 +67,6 @@ public class ProgrammableAgent extends SimulationAgent {
         }
     }
 
-    @Override
-    public void tick() {
-        while (!messages.isEmpty()) {
-            SimulationMessage message = messages.remove();
-            try {
-                luaScript.execute(ON_MESSAGE.getCallback(), message.getAsLuaValue());
-            } catch (LuaError | LuaScript.WatchDogError error) {
-                error.printStackTrace();
-                lastError = error.getMessage();
-            }
-        }
-    }
-
     public void onRedstonePowered() {
         try {
             luaScript.execute(ON_REDSTONE_SIGNAL.getCallback());
@@ -92,9 +78,11 @@ public class ProgrammableAgent extends SimulationAgent {
 
     @Override
     public void process(SimulationMessage message) {
-        if (!isLocked()) {
-            this.lock();
-            messages.add(message);
+        try {
+            luaScript.execute(ON_MESSAGE.getCallback(), message.getAsLuaValue());
+        } catch (LuaError | LuaScript.WatchDogError error) {
+            error.printStackTrace();
+            lastError = error.getMessage();
         }
     }
 

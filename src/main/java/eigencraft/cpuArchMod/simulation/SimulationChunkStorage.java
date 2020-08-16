@@ -21,7 +21,7 @@ public class SimulationChunkStorage {
         JsonArray simulationAgents = new JsonArray();
         root.add("agents", simulationAgents);
 
-        for (Map.Entry<BlockPos, SimulationAgent> simulationAgent : chunk.getSimulationAgents().entrySet()) {
+        for (Map.Entry<BlockPos, DynamicAgent> simulationAgent : chunk.getDynamicAgents().entrySet()) {
             JsonObject simulationAgentJson = new JsonObject();
             simulationAgentJson.add("x", new JsonPrimitive(simulationAgent.getKey().getX()));
             simulationAgentJson.add("y", new JsonPrimitive(simulationAgent.getKey().getY()));
@@ -71,11 +71,11 @@ public class SimulationChunkStorage {
                 for (JsonElement i : simulationAgents) {
                     JsonObject agentElement = i.getAsJsonObject();
                     BlockPos agentPos = new BlockPos(agentElement.get("x").getAsInt(), agentElement.get("y").getAsInt(), agentElement.get("z").getAsInt());
-                    SimulationAgent simulationAgent = SimulationAgent.getSimulationObject(agentElement.get("type").getAsString());
+                    DynamicAgent dynamicAgent = DynamicAgent.getSimulationObject(agentElement.get("type").getAsString());
                     if (agentElement.has("data")) {
-                        simulationAgent.loadConfig(agentElement.get("data"));
+                        dynamicAgent.loadConfig(agentElement.get("data"));
                     }
-                    chunk.addAgent(agentPos, simulationAgent);
+                    chunk.addAgent(agentPos, dynamicAgent);
                 }
             } catch (Exception e) {
                 e.printStackTrace();

@@ -5,7 +5,7 @@ import eigencraft.cpuArchMod.block.PipeContainer;
 import eigencraft.cpuArchMod.block.ProgrammableAgentBlockEntity;
 import eigencraft.cpuArchMod.block.ProgrammableAgentContainerBlock;
 import eigencraft.cpuArchMod.script.ServerScriptManager;
-import eigencraft.cpuArchMod.simulation.SimulationAgent;
+import eigencraft.cpuArchMod.simulation.DynamicAgent;
 import eigencraft.cpuArchMod.simulation.SimulationWorldInterface;
 import eigencraft.cpuArchMod.simulation.agents.PipeAgent;
 import eigencraft.cpuArchMod.simulation.agents.ProgrammableAgent;
@@ -85,8 +85,8 @@ public class CpuArchMod implements ModInitializer {
         ServerChunkEvents.CHUNK_UNLOAD.register((serverWorld, worldChunk) -> ((SimulationWorldInterface)serverWorld).addSimulationWorldTask(world -> world.markChunkUnloadable(worldChunk.getPos())));
 
         //Register simulation agents
-        SimulationAgent.register(ProgrammableAgent.class.getSimpleName(), ProgrammableAgent::new);
-        SimulationAgent.register(PipeAgent.class.getSimpleName(), PipeAgent::new);
+        DynamicAgent.register(ProgrammableAgent.class.getSimpleName(), ProgrammableAgent::new);
+        DynamicAgent.register(PipeAgent.class.getSimpleName(), PipeAgent::new);
 
         //Networking
         ServerSidePacketRegistry.INSTANCE.register(PROGRAMMABLE_AGENT_SAFE_CONFIG_C2S_PACKET, (packetContext, packetByteBuf) -> {
@@ -100,7 +100,7 @@ public class CpuArchMod implements ModInitializer {
 
             ServerWorld world = (ServerWorld) packetContext.getPlayer().getEntityWorld();
             ((SimulationWorldInterface) world).addSimulationWorldTask(world1 -> {
-                SimulationAgent simAgent = world1.getSimulationAgent(pos);
+                DynamicAgent simAgent = world1.getDynamicAgent(pos);
                 if (simAgent instanceof ProgrammableAgent) {
                     ProgrammableAgent agent = (ProgrammableAgent) simAgent;
                     agent.setScriptFileName(fileName);

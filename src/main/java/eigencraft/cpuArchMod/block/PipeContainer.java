@@ -60,11 +60,9 @@ public class PipeContainer extends ConnectingBlock implements CpuArchModBlock {
     @Override
     public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack itemStack) {
         if (!world.isClient()) {
-            ((SimulationWorldInterface) world).addSimulationWorldTask(new SimulationWorldRunnable() {
-                @Override
-                public void run(SimulationWorld world) {
-                    world.addSimulationAgent(pos, new PipeAgent());
-                }
+            ((SimulationWorldInterface) world).addSimulationWorldTask(world1 -> {
+
+                world1.addPipe(pos);
             });
         }
     }
@@ -72,12 +70,7 @@ public class PipeContainer extends ConnectingBlock implements CpuArchModBlock {
     @Override
     public void onBroken(WorldAccess world, BlockPos pos, BlockState state) {
         if (!world.isClient()) {
-            ((SimulationWorldInterface) world).addSimulationWorldTask(new SimulationWorldRunnable() {
-                @Override
-                public void run(SimulationWorld world) {
-                    world.removeSimulationAgent(pos);
-                }
-            });
+            ((SimulationWorldInterface) world).addSimulationWorldTask(world1 -> world1.removeSimulationObject(pos));
         }
     }
 

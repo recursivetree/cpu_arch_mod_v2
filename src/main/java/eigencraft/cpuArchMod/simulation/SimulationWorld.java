@@ -34,7 +34,7 @@ public class SimulationWorld implements Runnable {
         if (!loadedChunks.containsKey(chunkPos)) {
             SimulationChunk newChunk = new SimulationChunk(this);
             loadedChunks.put(chunkPos, newChunk);
-            SimulationChunkStorage.loadChunk(chunkPos, newChunk, saveDirectory);
+            //SimulationChunkStorage.loadChunk(chunkPos, newChunk, saveDirectory);
         }
         return loadedChunks.get(chunkPos);
     }
@@ -47,12 +47,16 @@ public class SimulationWorld implements Runnable {
         getChunk(pos).makePersistent();
     }
 
-    public void addSimulationAgent(BlockPos pos, SimulationAgent simulationAgent) {
-        getChunk(pos).addAgent(pos, simulationAgent);
+    public void addDynamicAgent(BlockPos pos, DynamicAgent dynamicAgent) {
+        getChunk(pos).addAgent(pos, dynamicAgent);
     }
 
-    public void removeSimulationAgent(BlockPos pos) {
-        getChunk(pos).removeConnectable(pos);
+    public void addPipe(BlockPos pos){
+        getChunk(pos).addPipe(pos);
+    }
+
+    public void removeSimulationObject(BlockPos pos) {
+        getChunk(pos).removeAgent(pos);
     }
 
     @Override
@@ -99,8 +103,8 @@ public class SimulationWorld implements Runnable {
         }
     }
 
-    public SimulationAgent getSimulationAgent(BlockPos pos) {
-        return getChunk(pos).getSimulationObjectAt(pos);
+    public DynamicAgent getDynamicAgent(BlockPos pos) {
+        return getChunk(pos).getDynamicAgentAt(pos);
     }
 
     public void stop() {

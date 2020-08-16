@@ -2,11 +2,12 @@ package eigencraft.cpuArchMod.simulation;
 
 import net.minecraft.util.math.BlockPos;
 
-import java.util.HashMap;
+import java.util.*;
 
 public class SimulationChunk {
     SimulationWorld simulation;
-    private final HashMap<BlockPos, SimulationAgent> simulationAgents = new HashMap<>();
+    private final HashMap<BlockPos, DynamicAgent> dynamicAgents = new HashMap<>();
+    private final List<PipeNetwork> pipeNetworkList = new ArrayList<>();
     private boolean persistent = false;
 
     public void makePersistent(){
@@ -21,49 +22,95 @@ public class SimulationChunk {
         this.simulation = simulation;
     }
 
-    public void addAgent(BlockPos pos, SimulationAgent simulationAgent) {
-        simulationAgents.put(pos, simulationAgent);
-
-        simulation.getChunk(pos.north()).connectConnectable(simulationAgent, pos.north());
-        simulation.getChunk(pos.south()).connectConnectable(simulationAgent, pos.south());
-        simulation.getChunk(pos.east()).connectConnectable(simulationAgent, pos.east());
-        simulation.getChunk(pos.west()).connectConnectable(simulationAgent, pos.west());
-        simulation.getChunk(pos.up()).connectConnectable(simulationAgent, pos.up());
-        simulation.getChunk(pos.down()).connectConnectable(simulationAgent, pos.down());
+    public void addAgent(BlockPos pos, DynamicAgent dynamicAgent) {
+        dynamicAgents.put(pos, dynamicAgent);
+        System.out.println("node added");
+        connectAgent(pos);
     }
 
-    private void connectConnectable(SimulationAgent newSimulationAgent, BlockPos pos) {
-        if (simulationAgents.containsKey(pos)) {
-            SimulationAgent oldSimulationAgent = simulationAgents.get(pos);
-            oldSimulationAgent.connect(newSimulationAgent);
-            newSimulationAgent.connect(oldSimulationAgent);
-        }
-    }
+    public void addPipe(BlockPos pos) {
+        Set<PipeNetwork> networks = getNeighborNetworks(pos);
 
-    public void removeConnectable(BlockPos pos) {
-        if (simulationAgents.containsKey(pos)) {
-            SimulationAgent toRemove = simulationAgents.get(pos);
-            for (SimulationAgent agent : toRemove.getConnections()) {
-                agent.disconnect(toRemove);
+        if (networks.size()==0){
+            PipeNetwork newNetwork = new PipeNetwork();
+            pipeNetworkList.add(newNetwork);
+            newNetwork.addMember(pos);
+        } else {
+            PipeNetwork root = new PipeNetwork();
+            pipeNetworkList.add(root);
+            for(PipeNetwork network:networks){
+                pipeNetworkList.remove(network);
+                root.merge(network);
             }
-            simulationAgents.remove(pos);
+            root.addMember(pos);
+        }
+
+        connectAgent(pos.up());
+        connectAgent(pos.down());
+        connectAgent(pos.west());
+        connectAgent(pos.east());
+        connectAgent(pos.north());
+        connectAgent(pos.south());
+    }
+
+    private void connectAgent(BlockPos pos){
+        DynamicAgent agent = getDynamicAgentAt(pos);
+        System.out.println("call to connect");
+        if (agent!=null) {
+            for (PipeNetwork network : getNeighborNetworks(pos)) {
+                network.addDynamicAgent(agent);
+                agent.connect(network);
+                System.out.println("connect");
+            }
         }
     }
 
-    public SimulationAgent getSimulationObjectAt(BlockPos pos) {
-        return simulationAgents.getOrDefault(pos, null);
+    public void removeAgent(BlockPos pos) {
+        if (dynamicAgents.containsKey(pos)){
+            getDynamicAgentAt(pos).removeFromWorld();
+        } else {
+            //TODO pipe splitting algorithm
+        }
+    }
+
+    private Set<PipeNetwork> getNeighborNetworks(BlockPos pos){
+        SimulationChunk chunk = simulation.getChunk(pos);
+        Set<PipeNetwork> networks = new HashSet<>();
+        networks.add(chunk.getSimulationNetworkAt(pos));
+        networks.add(chunk.getSimulationNetworkAt(pos.up()));
+        networks.add(chunk.getSimulationNetworkAt(pos.down()));
+        networks.add(chunk.getSimulationNetworkAt(pos.west()));
+        networks.add(chunk.getSimulationNetworkAt(pos.east()));
+        networks.add(chunk.getSimulationNetworkAt(pos.north()));
+        networks.add(chunk.getSimulationNetworkAt(pos.south()));
+        //noinspection StatementWithEmptyBody
+        while (networks.remove(null));
+        return networks;
+    }
+
+    private PipeNetwork getSimulationNetworkAt(BlockPos pos){
+        for(PipeNetwork network:pipeNetworkList){
+            if (network.containsBlock(pos)){
+                return network;
+            }
+        }
+        return null;
+    }
+
+    public DynamicAgent getDynamicAgentAt(BlockPos pos) {
+        return dynamicAgents.getOrDefault(pos, null);
     }
 
     public boolean shouldSave() {
-        return simulationAgents.size() > 0;
+        return dynamicAgents.size() > 0;
     }
 
-    public HashMap<BlockPos, SimulationAgent> getSimulationAgents() {
-        return simulationAgents;
+    public HashMap<BlockPos, DynamicAgent> getDynamicAgents() {
+        return dynamicAgents;
     }
 
     public void tick() {
-        for (SimulationAgent agent : simulationAgents.values()) {
+        for (DynamicAgent agent : dynamicAgents.values()) {
             //Use special tick for cleaner sub class implementation of SimulationAgent
             agent.tick();
         }

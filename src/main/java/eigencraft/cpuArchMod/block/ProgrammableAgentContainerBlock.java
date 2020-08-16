@@ -1,10 +1,8 @@
 package eigencraft.cpuArchMod.block;
 
 import eigencraft.cpuArchMod.CpuArchMod;
-import eigencraft.cpuArchMod.simulation.SimulationAgent;
-import eigencraft.cpuArchMod.simulation.SimulationWorld;
+import eigencraft.cpuArchMod.simulation.DynamicAgent;
 import eigencraft.cpuArchMod.simulation.SimulationWorldInterface;
-import eigencraft.cpuArchMod.simulation.SimulationWorldRunnable;
 import eigencraft.cpuArchMod.simulation.agents.ProgrammableAgent;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
@@ -37,14 +35,14 @@ public class ProgrammableAgentContainerBlock extends Block implements CpuArchMod
     @Override
     public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack itemStack) {
         if (!world.isClient()) {
-            ((SimulationWorldInterface) world).addSimulationWorldTask(world1 -> world1.addSimulationAgent(pos, new ProgrammableAgent()));
+            ((SimulationWorldInterface) world).addSimulationWorldTask(world1 -> world1.addDynamicAgent(pos, new ProgrammableAgent()));
         }
     }
 
     @Override
     public void onBroken(WorldAccess world, BlockPos pos, BlockState state) {
         if (!world.isClient()) {
-            ((SimulationWorldInterface) world).addSimulationWorldTask(world1 -> world1.removeSimulationAgent(pos));
+            ((SimulationWorldInterface) world).addSimulationWorldTask(world1 -> world1.removeSimulationObject(pos));
         }
     }
 
@@ -52,7 +50,7 @@ public class ProgrammableAgentContainerBlock extends Block implements CpuArchMod
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
         if (!world.isClient) {
             ((SimulationWorldInterface) world).addSimulationWorldTask(world1 -> {
-                SimulationAgent rawAgent = world1.getSimulationAgent(pos);
+                DynamicAgent rawAgent = world1.getDynamicAgent(pos);
                 if (rawAgent instanceof ProgrammableAgent) {
                     ProgrammableAgent agent = (ProgrammableAgent) rawAgent;
                     PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
@@ -76,7 +74,7 @@ public class ProgrammableAgentContainerBlock extends Block implements CpuArchMod
                 world.setBlockState(pos, state.with(POWERED, isPowered));
                 if (isPowered) {
                     ((SimulationWorldInterface) world).addSimulationWorldTask(world1 -> {
-                        SimulationAgent rawAgent = world1.getSimulationAgent(pos);
+                        DynamicAgent rawAgent = world1.getDynamicAgent(pos);
                         if (rawAgent instanceof ProgrammableAgent) {
                             ProgrammableAgent agent = (ProgrammableAgent) rawAgent;
                             agent.onRedstonePowered();
