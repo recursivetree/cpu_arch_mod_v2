@@ -28,6 +28,7 @@ public class ProgrammableAgent extends SimulationAgent {
     private final LinkedList<SimulationMessage> messages = new LinkedList<>();
     private String scriptFileName = "unconfigured";
     private String scriptSrc = "";
+    private String lastError = null;
 
 
     public ProgrammableAgent() {
@@ -49,12 +50,21 @@ public class ProgrammableAgent extends SimulationAgent {
         return scriptSrc;
     }
 
+    public String getErrorLog() {
+        return (lastError == null) ? "" : lastError;
+    }
+
+    public void resetErrorLog() {
+        lastError = null;
+    }
+
     public void setScriptSrc(String scriptSrc) {
         this.scriptSrc = scriptSrc;
         try {
             luaScript.compileCode(scriptSrc, CpuArchMod.CONFIGURATION.getScriptExecutionTimeout(), api, scriptFileName);
         } catch (LuaError luaError) {
             luaError.printStackTrace();
+            lastError = luaError.getMessage();
         }
     }
 
@@ -66,6 +76,7 @@ public class ProgrammableAgent extends SimulationAgent {
                 luaScript.execute(ON_MESSAGE.getCallback(), message.getAsLuaValue());
             } catch (LuaError | LuaScript.WatchDogError error) {
                 error.printStackTrace();
+                lastError = error.getMessage();
             }
         }
     }
@@ -75,6 +86,7 @@ public class ProgrammableAgent extends SimulationAgent {
             luaScript.execute(ON_REDSTONE_SIGNAL.getCallback());
         } catch (LuaError | LuaScript.WatchDogError error) {
             error.printStackTrace();
+            lastError = error.getMessage();
         }
     }
 

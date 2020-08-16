@@ -24,15 +24,17 @@ public class ProgrammableAgentGUI extends LightweightGuiDescription {
     WGridPanel root = new WGridPanel();
     String currentScriptFileName;
     String currentScript;
+    String errorLog;
     BlockPos pos;
     //File scriptsDirectory = new File(FabricLoader.getInstance().getConfigDirectory(), "cpu_arch_mod_scripts");
     private final List<WWidget> widgets = new ArrayList<>();
 
-    public ProgrammableAgentGUI(String currentScriptFileName, String currentScript, BlockPos pos) {
+    public ProgrammableAgentGUI(String currentScriptFileName, String currentScript, String errorLog, BlockPos pos) {
         setRootPanel(root);
         this.pos = pos;
         this.currentScriptFileName = currentScriptFileName;
         this.currentScript = currentScript;
+        this.errorLog = errorLog;
         root.setSize(180, 180);
         buildMainScreen();
     }
@@ -49,6 +51,17 @@ public class ProgrammableAgentGUI extends LightweightGuiDescription {
         });
         addElement(openFileSelectionScreen, 6, 0, 4, 1);
 
+        if (this.errorLog != null) {
+            WButton openErrorMessageScreen = new WButton(new TranslatableText("gui.cpu_arch_mod.open_error_screen"));
+            openErrorMessageScreen.setOnClick(new Runnable() {
+                @Override
+                public void run() {
+                    buildErrorScreen();
+                }
+            });
+            addElement(openErrorMessageScreen, 6, 1, 4, 1);
+        }
+
         String[] elements = currentScript.split(System.lineSeparator());
         TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
         int totalHeight = elements.length * textRenderer.fontHeight + 8;
@@ -60,6 +73,34 @@ public class ProgrammableAgentGUI extends LightweightGuiDescription {
             }
         }
         WText srcPreview = new WText(new LiteralText(currentScript));
+        srcPreview.setSize(maxWidth + 8, totalHeight);
+        WScrollPanel scrollPanel = new WScrollPanel(srcPreview);
+        addElement(scrollPanel, 0, 2, 10, 8);
+    }
+
+    protected void buildErrorScreen() {
+        removeElements();
+
+        WButton back = new WButton(new TranslatableText("gui.cpu_arch_mod.back"));
+        back.setOnClick(new Runnable() {
+            @Override
+            public void run() {
+                buildMainScreen();
+            }
+        });
+        addElement(back, 0, 0, 3, 1);
+
+        String[] elements = errorLog.split(System.lineSeparator());
+        TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+        int totalHeight = elements.length * textRenderer.fontHeight + 8;
+        int maxWidth = 0;
+        for (int i = 0; i < elements.length; i++) {
+            int width = textRenderer.getWidth(elements[i]);
+            if (width > maxWidth) {
+                maxWidth = width;
+            }
+        }
+        WText srcPreview = new WText(new LiteralText(errorLog));
         srcPreview.setSize(maxWidth + 8, totalHeight);
         WScrollPanel scrollPanel = new WScrollPanel(srcPreview);
         addElement(scrollPanel, 0, 2, 10, 8);
