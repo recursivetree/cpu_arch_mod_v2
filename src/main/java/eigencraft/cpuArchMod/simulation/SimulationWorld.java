@@ -8,59 +8,29 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
-import java.io.IOError;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 
 public class SimulationWorld implements Runnable {
     private static Logger LOGGER = LogManager.getLogger(CpuArchMod.MOD_ID);
-    private final HashMap<ChunkPos, SimulationChunk> loadedChunks = new HashMap();
     private final Thread simulationThread;
-    private final ServerWorld world;
     private final File saveDirectory;
     private final LinkedList<SimulationWorldRunnable> tasks = new LinkedList<>();
     private boolean running = true;
 
     public SimulationWorld(File cpu_sim_directory, ServerWorld serverWorld) {
         simulationThread = new Thread(this);
-        world = serverWorld;
         saveDirectory = cpu_sim_directory;
         saveDirectory.mkdirs();
         simulationThread.start();
     }
 
-    public SimulationChunk getChunk(ChunkPos chunkPos) {
-        if (!loadedChunks.containsKey(chunkPos)) {
-            SimulationChunk newChunk = new SimulationChunk(this);
-            loadedChunks.put(chunkPos, newChunk);
-            //SimulationChunkStorage.loadChunk(chunkPos, newChunk, saveDirectory);
-        }
-        return loadedChunks.get(chunkPos);
-    }
-
-    public SimulationChunk getChunk(BlockPos pos) {
-        return getChunk(new ChunkPos(pos));
-    }
-
     public void persistentLoadChunk(ChunkPos pos){
-        getChunk(pos).makePersistent();
-    }
-
-    public void addDynamicAgent(BlockPos pos, DynamicAgent dynamicAgent) {
-        getChunk(pos).addAgent(pos, dynamicAgent);
-    }
-
-    public void addPipe(BlockPos pos){
-        getChunk(pos).addPipe(pos);
-    }
-
-    public void removeSimulationObject(BlockPos pos) {
-        getChunk(pos).removeAgent(pos);
+        //TODO ensure pipeNetworks in chunk are loaded
     }
 
     @Override
     public void run() {
+        SimulationWorldStorage.loadWorld(this,saveDirectory);
         long lastSave = System.currentTimeMillis();
         while (running) {
             while (!tasks.isEmpty()) {
@@ -68,8 +38,8 @@ public class SimulationWorld implements Runnable {
                     tasks.remove().run(this);
                 }
             }
-            for (SimulationChunk chunk : loadedChunks.values()) {
-                chunk.tick();
+            for (DynamicAgent agent : dynamicAgents.values()) {
+                agent.tick();
             }
             if (System.currentTimeMillis() - lastSave > 60000) {
                 saveWorld();
@@ -80,20 +50,8 @@ public class SimulationWorld implements Runnable {
     }
 
     public void saveWorld() {
-        for (Map.Entry<ChunkPos, SimulationChunk> chunk : loadedChunks.entrySet()) {
-            if (chunk.getValue().shouldSave()) {
-                SimulationChunkStorage.saveChunk(chunk.getKey(), chunk.getValue(), saveDirectory);
-            } else {
-                try {
-                    SimulationChunkStorage.getChunkSavePath(chunk.getKey(), saveDirectory).delete();
-                } catch (IOError e) {
-                    e.printStackTrace();
-                }
-            }
-            if (!chunk.getValue().isPersistent()){
-                loadedChunks.remove(chunk.getKey());
-            }
-        }
+        //TODO saving
+        SimulationWorldStorage.saveWorld(this,saveDirectory);
         LOGGER.info("saved simulation world");
     }
 
@@ -103,18 +61,113 @@ public class SimulationWorld implements Runnable {
         }
     }
 
-    public DynamicAgent getDynamicAgent(BlockPos pos) {
-        return getChunk(pos).getDynamicAgentAt(pos);
-    }
-
     public void stop() {
         running = false;
         simulationThread.interrupt();
     }
 
     public void markChunkUnloadable(ChunkPos pos) {
-        if (loadedChunks.containsKey(pos)){
-            getChunk(pos).makeUnloadable();
+        //TODO unload chunk if no longer required.
+    }
+
+    private final HashMap<BlockPos, DynamicAgent> dynamicAgents = new HashMap<>();
+    private final List<PipeNetwork> pipeNetworkList = new ArrayList<>();
+
+    public void addDynamicAgent(BlockPos pos, DynamicAgent dynamicAgent) {
+        dynamicAgents.put(pos, dynamicAgent);
+        System.out.println("node added");
+        connectAgent(pos);
+    }
+
+    public void addPipe(BlockPos pos) {
+        Set<PipeNetwork> networks = getNeighborNetworks(pos);
+
+        if (networks.size()==0){
+            PipeNetwork newNetwork = new PipeNetwork();
+            pipeNetworkList.add(newNetwork);
+            newNetwork.addMember(pos);
+        } else {
+            PipeNetwork root = new PipeNetwork();
+            pipeNetworkList.add(root);
+            for(PipeNetwork network:networks){
+                pipeNetworkList.remove(network);
+                root.merge(network);
+            }
+            root.addMember(pos);
         }
+
+        connectAgent(pos.up());
+        connectAgent(pos.down());
+        connectAgent(pos.west());
+        connectAgent(pos.east());
+        connectAgent(pos.north());
+        connectAgent(pos.south());
+    }
+
+    private void connectAgent(BlockPos pos){
+        DynamicAgent agent = getDynamicAgent(pos);
+        System.out.println("call to connect");
+        if (agent!=null) {
+            for (PipeNetwork network : getNeighborNetworks(pos)) {
+                network.addDynamicAgent(agent);
+                agent.connect(network);
+                System.out.println("connect");
+            }
+        }
+    }
+
+    public void removeSimulationObject(BlockPos pos) {
+        if (dynamicAgents.containsKey(pos)){
+            getDynamicAgent(pos).removeFromWorld();
+        } else {
+            //TODO efficient pipe splitting algorithm
+            PipeNetwork toSplit = getSimulationNetworkAt(pos);
+            pipeNetworkList.remove(toSplit);
+            if (toSplit != null) {
+                for(DynamicAgent agent:toSplit.getAgents()){
+                    agent.disconnect(toSplit);
+                }
+                Set<BlockPos> members = toSplit.getMembers();
+                members.remove(pos);
+                for(BlockPos memberPos:members){
+                    addPipe(memberPos);
+                }
+            }
+        }
+    }
+
+    private Set<PipeNetwork> getNeighborNetworks(BlockPos pos){
+        Set<PipeNetwork> networks = new HashSet<>();
+        networks.add(getSimulationNetworkAt(pos));
+        networks.add(getSimulationNetworkAt(pos.up()));
+        networks.add(getSimulationNetworkAt(pos.down()));
+        networks.add(getSimulationNetworkAt(pos.west()));
+        networks.add(getSimulationNetworkAt(pos.east()));
+        networks.add(getSimulationNetworkAt(pos.north()));
+        networks.add(getSimulationNetworkAt(pos.south()));
+        //noinspection StatementWithEmptyBody
+        while (networks.remove(null));
+        return networks;
+    }
+
+    private PipeNetwork getSimulationNetworkAt(BlockPos pos){
+        for(PipeNetwork network:pipeNetworkList){
+            if (network.containsBlock(pos)){
+                return network;
+            }
+        }
+        return null;
+    }
+
+    public DynamicAgent getDynamicAgent(BlockPos pos) {
+        return dynamicAgents.getOrDefault(pos, null);
+    }
+
+    public HashMap<BlockPos, DynamicAgent> getDynamicAgents() {
+        return dynamicAgents;
+    }
+
+    public List<PipeNetwork> getPipeNetworks() {
+        return pipeNetworkList;
     }
 }

@@ -7,7 +7,6 @@ import eigencraft.cpuArchMod.block.ProgrammableAgentContainerBlock;
 import eigencraft.cpuArchMod.script.ServerScriptManager;
 import eigencraft.cpuArchMod.simulation.DynamicAgent;
 import eigencraft.cpuArchMod.simulation.SimulationWorldInterface;
-import eigencraft.cpuArchMod.simulation.agents.PipeAgent;
 import eigencraft.cpuArchMod.simulation.agents.ProgrammableAgent;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder;
@@ -86,7 +85,6 @@ public class CpuArchMod implements ModInitializer {
 
         //Register simulation agents
         DynamicAgent.register(ProgrammableAgent.class.getSimpleName(), ProgrammableAgent::new);
-        DynamicAgent.register(PipeAgent.class.getSimpleName(), PipeAgent::new);
 
         //Networking
         ServerSidePacketRegistry.INSTANCE.register(PROGRAMMABLE_AGENT_SAFE_CONFIG_C2S_PACKET, (packetContext, packetByteBuf) -> {

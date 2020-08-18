@@ -1,9 +1,6 @@
 package eigencraft.cpuArchMod.block;
 
-import eigencraft.cpuArchMod.simulation.SimulationWorld;
 import eigencraft.cpuArchMod.simulation.SimulationWorldInterface;
-import eigencraft.cpuArchMod.simulation.SimulationWorldRunnable;
-import eigencraft.cpuArchMod.simulation.agents.PipeAgent;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ConnectingBlock;

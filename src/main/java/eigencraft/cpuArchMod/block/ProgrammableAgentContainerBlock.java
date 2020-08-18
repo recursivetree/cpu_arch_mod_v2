@@ -30,6 +30,7 @@ public class ProgrammableAgentContainerBlock extends Block implements CpuArchMod
 
     public ProgrammableAgentContainerBlock() {
         super(Settings.of(Material.STONE).breakInstantly().strength(1));
+        setDefaultState(getStateManager().getDefaultState().with(POWERED, false));
     }
 
     @Override
