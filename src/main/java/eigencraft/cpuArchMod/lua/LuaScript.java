@@ -5,7 +5,9 @@ import org.luaj.vm2.compiler.LuaC;
 import org.luaj.vm2.lib.*;
 import org.luaj.vm2.lib.jse.JseBaseLib;
 import org.luaj.vm2.lib.jse.JseMathLib;
-
+/***
+ * For explanation of luaj, the used lua library, and the sandbox
+ * ***/
 public class LuaScript {
     static Globals server_globals;
 
@@ -52,6 +54,9 @@ public class LuaScript {
         callback.call(arg);
     }
 
+    /***
+     * Hacky execution time limit, throws an WatchDogError exception when time limit is exceeded
+     * ***/
     public static class LuaScriptWatchDog extends DebugLib {
         int maxTime;
         private long startTime = System.currentTimeMillis();
@@ -62,6 +67,7 @@ public class LuaScript {
 
         @Override
         public void onInstruction(int pc, Varargs v, int top) {
+            super.onInstruction(pc,v,top);
             if (System.currentTimeMillis() - startTime > maxTime) {
                 throw new WatchDogError(String.format("Callback took longer than %d ms", maxTime));
             }

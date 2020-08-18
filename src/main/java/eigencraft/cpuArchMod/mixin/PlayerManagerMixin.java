@@ -18,6 +18,8 @@ import java.io.IOException;
 public class PlayerManagerMixin {
     @Inject(method = "onPlayerConnect", at = @At("RETURN"))
     private void onPlayerConnectEnd(ClientConnection connection, ServerPlayerEntity player, CallbackInfo ci) {
+
+        //Sync serverside scripts
         for (String fileName: CpuArchMod.SCRIPT_MANAGER.listAvailableFiles()){
             PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
             passedData.writeString(fileName);

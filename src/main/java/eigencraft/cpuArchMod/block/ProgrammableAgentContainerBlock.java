@@ -50,16 +50,23 @@ public class ProgrammableAgentContainerBlock extends Block implements CpuArchMod
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
         if (!world.isClient) {
+            //Open configuration gui
             ((SimulationWorldInterface) world).addSimulationWorldTask(world1 -> {
                 DynamicAgent rawAgent = world1.getDynamicAgent(pos);
                 if (rawAgent instanceof ProgrammableAgent) {
                     ProgrammableAgent agent = (ProgrammableAgent) rawAgent;
                     PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
+                    //The position
                     passedData.writeBlockPos(pos);
+                    //Filename
                     passedData.writeString(agent.getScriptFileName());
+                    //script src
                     passedData.writeString(agent.getScriptSrc());
+                    //error log, if "", the client won't show the log
                     passedData.writeString(agent.getErrorLog());
+                    //Reset error log
                     agent.resetErrorLog();
+                    //Send package
                     ServerSidePacketRegistry.INSTANCE.sendToPlayer(player, CpuArchMod.PROGRAMMABLE_AGENT_OPEN_GUI_S2C_PACKET, passedData);
                 }
             });

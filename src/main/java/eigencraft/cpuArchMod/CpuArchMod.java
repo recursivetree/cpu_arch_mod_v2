@@ -79,10 +79,6 @@ public class CpuArchMod implements ModInitializer {
         //Setup server script manager
         ServerLifecycleEvents.SERVER_STARTING.register(minecraftServer -> SCRIPT_MANAGER = new ServerScriptManager(new File(minecraftServer.getSavePath(WorldSavePath.ROOT).toFile(),"cpu_arch_mod_scripts")));
 
-        ServerChunkEvents.CHUNK_LOAD.register((serverWorld, worldChunk) -> ((SimulationWorldInterface)serverWorld).addSimulationWorldTask(world -> world.persistentLoadChunk(worldChunk.getPos())));
-
-        ServerChunkEvents.CHUNK_UNLOAD.register((serverWorld, worldChunk) -> ((SimulationWorldInterface)serverWorld).addSimulationWorldTask(world -> world.markChunkUnloadable(worldChunk.getPos())));
-
         //Register simulation agents
         DynamicAgent.register(ProgrammableAgent.class.getSimpleName(), ProgrammableAgent::new);
 
@@ -115,7 +111,7 @@ public class CpuArchMod implements ModInitializer {
             });
         });
 
-        //End on setup
+        //End of setup
     }
 }
 
