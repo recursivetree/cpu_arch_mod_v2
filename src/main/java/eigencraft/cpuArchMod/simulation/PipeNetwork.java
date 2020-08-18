@@ -26,6 +26,7 @@ public class PipeNetwork {
     }
 
     public void merge(PipeNetwork other) {
+        if (other==null) return;
         for (DynamicAgent agent: other.dynamicAgents){
             agent.disconnect(other);
             agent.connect(this);

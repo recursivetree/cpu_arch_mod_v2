@@ -111,17 +111,14 @@ public class SimulationWorld implements Runnable {
 
         //Add to existing network
         else {
-            //Because their might be multiple networks on the neighboring blocks, we need to merge them. For simplicity, we create a new and merge them all into it
-            PipeNetwork root = new PipeNetwork();
-            //Store network in network list
-            pipeNetworkList.add(root);
-            //Merge all neighboring networks
-            for(PipeNetwork network:networks){
-                pipeNetworkList.remove(network);
-                root.merge(network);
+            pipeNetworkList.removeAll(networks);
+            PipeNetwork currentNetwork = null;
+            for (PipeNetwork network:networks){
+                network.merge(currentNetwork);
+                currentNetwork = network;
             }
-            //Add the new pipe
-            root.addMember(pos);
+            currentNetwork.addMember(pos);
+            pipeNetworkList.add(currentNetwork);
         }
 
         //connect agents nearby
@@ -181,20 +178,27 @@ public class SimulationWorld implements Runnable {
 
     private Set<PipeNetwork> getNeighborNetworks(BlockPos pos){
         Set<PipeNetwork> networks = new HashSet<>();
-        networks.add(getSimulationNetworkAt(pos));
-        networks.add(getSimulationNetworkAt(pos.up()));
-        networks.add(getSimulationNetworkAt(pos.down()));
-        networks.add(getSimulationNetworkAt(pos.west()));
-        networks.add(getSimulationNetworkAt(pos.east()));
-        networks.add(getSimulationNetworkAt(pos.north()));
-        networks.add(getSimulationNetworkAt(pos.south()));
-        //Remove all null, works because remove returns a boolean indicating the success
-        //noinspection StatementWithEmptyBody
-        while (networks.remove(null));
+        //Use optimised method (takes a collection instead of returning single, null containing values)
+        getPipeNetworkWithCollection(pos.up(),networks);
+        getPipeNetworkWithCollection(pos.down(),networks);
+        getPipeNetworkWithCollection(pos.west(),networks);
+        getPipeNetworkWithCollection(pos.south(),networks);
+        getPipeNetworkWithCollection(pos.north(),networks);
+        getPipeNetworkWithCollection(pos.east(),networks);
         return networks;
     }
 
+    private void getPipeNetworkWithCollection(BlockPos pos, Collection<PipeNetwork> collection){
+        //Stores the result in a collection instead of directly returning it
+        for(PipeNetwork network:pipeNetworkList){
+            if (network.containsBlock(pos)){
+                collection.add(network);
+            }
+        }
+    }
+
     private PipeNetwork getSimulationNetworkAt(BlockPos pos){
+        //Returns the simulation network at a pos
         for(PipeNetwork network:pipeNetworkList){
             if (network.containsBlock(pos)){
                 return network;
