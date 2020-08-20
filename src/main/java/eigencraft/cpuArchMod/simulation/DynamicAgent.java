@@ -1,25 +1,35 @@
 package eigencraft.cpuArchMod.simulation;
 
 import com.google.gson.JsonElement;
+import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.function.Supplier;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
 
 public abstract class DynamicAgent {
-    private static HashMap<String, Supplier<DynamicAgent>> constructors = new HashMap<>();
+    private static HashMap<String, BiFunction<SimulationWorld,BlockPos,DynamicAgent>> constructors = new HashMap<>();
 
 
     private final ArrayList<PipeNetwork> pipeNetworks = new ArrayList<>(1);
     private final LinkedList<SimulationMessage> messages = new LinkedList<>();
 
-    public static void register(String name, Supplier<DynamicAgent> constructor) {
+    public static void register(String name, BiFunction<SimulationWorld,BlockPos,DynamicAgent> constructor) {
         constructors.put(name, constructor);
     }
+    protected SimulationWorld world;
+    protected BlockPos pos;
 
-    public static DynamicAgent getSimulationObject(String name) {
-        return constructors.get(name).get();
+    public DynamicAgent(SimulationWorld world, BlockPos pos){
+        this.world = world;
+        this.pos = pos;
+    }
+
+    public static DynamicAgent createDynamicAgent(String name, SimulationWorld world,BlockPos pos) {
+        return constructors.get(name).apply(world,pos);
     }
 
     public void connect(PipeNetwork network) {

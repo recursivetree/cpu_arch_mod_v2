@@ -4,10 +4,17 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import eigencraft.cpuArchMod.CpuArchMod;
+import eigencraft.cpuArchMod.block.ProgrammableAgentBlockEntity;
 import eigencraft.cpuArchMod.lua.LuaAPI;
 import eigencraft.cpuArchMod.lua.LuaScript;
 import eigencraft.cpuArchMod.simulation.DynamicAgent;
 import eigencraft.cpuArchMod.simulation.SimulationMessage;
+import eigencraft.cpuArchMod.simulation.SimulationWorld;
+import eigencraft.cpuArchMod.simulation.WorldRunnable;
+import io.github.cottonmc.cotton.gui.widget.data.Color;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockPos;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.luaj.vm2.LuaError;
@@ -16,7 +23,6 @@ import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.TwoArgFunction;
 
 import java.io.IOException;
-import java.util.LinkedList;
 
 public class ProgrammableAgent extends DynamicAgent {
     private static final Logger LOGGER = LogManager.getLogger(CpuArchMod.MOD_ID);
@@ -29,8 +35,8 @@ public class ProgrammableAgent extends DynamicAgent {
     private String scriptSrc = "";
     private String lastError = null;
 
-
-    public ProgrammableAgent() {
+    public ProgrammableAgent(SimulationWorld world, BlockPos pos) {
+        super(world,pos);
         api.register("onRedstoneSignal", ON_REDSTONE_SIGNAL);
         api.register("onMessage", ON_MESSAGE);
         api.register("publish", new MessagePublisher());
@@ -63,8 +69,23 @@ public class ProgrammableAgent extends DynamicAgent {
             luaScript.compileCode(scriptSrc, CpuArchMod.CONFIGURATION.getScriptExecutionTimeout(), api, scriptFileName);
         } catch (LuaError luaError) {
             luaError.printStackTrace();
-            lastError = luaError.getMessage();
+            handleLuaError(luaError);
         }
+    }
+
+    private void handleLuaError(Throwable t){
+        lastError = t.getMessage();
+        world.addMainGameTask(new WorldRunnable(){
+            @Override
+            public void run(ServerWorld world) {
+                BlockEntity blockEntity = world.getBlockEntity(pos);
+                if (blockEntity != null) {
+                    if (blockEntity instanceof ProgrammableAgentBlockEntity) {
+                        ((ProgrammableAgentBlockEntity) blockEntity).setAppearance(String.format("Failed: %s",scriptFileName), Color.RED_DYE.toRgb());
+                    }
+                }
+            }
+        });
     }
 
     public void onRedstonePowered() {
@@ -72,7 +93,7 @@ public class ProgrammableAgent extends DynamicAgent {
             luaScript.execute(ON_REDSTONE_SIGNAL.getCallback());
         } catch (LuaError | LuaScript.WatchDogError error) {
             error.printStackTrace();
-            lastError = error.getMessage();
+            handleLuaError(error);
         }
     }
 
@@ -82,7 +103,7 @@ public class ProgrammableAgent extends DynamicAgent {
             luaScript.execute(ON_MESSAGE.getCallback(), message.getAsLuaValue());
         } catch (LuaError | LuaScript.WatchDogError error) {
             error.printStackTrace();
-            lastError = error.getMessage();
+            handleLuaError(error);
         }
     }
 
@@ -108,6 +129,11 @@ public class ProgrammableAgent extends DynamicAgent {
                 }
             }
         }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
     }
 
     private class MessagePublisher extends TwoArgFunction {

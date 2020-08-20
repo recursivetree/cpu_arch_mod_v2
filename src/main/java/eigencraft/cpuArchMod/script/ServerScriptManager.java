@@ -1,11 +1,19 @@
 package eigencraft.cpuArchMod.script;
 
+import eigencraft.cpuArchMod.CpuArchMod;
+import io.netty.buffer.Unpooled;
+import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.server.network.ServerPlayerEntity;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class ServerScriptManager {
     private File localFilesDirectory;
@@ -48,5 +56,21 @@ public class ServerScriptManager {
 
     public String readFile(String file) throws IOException {
         return new String(Files.readAllBytes(new File(localFilesDirectory,file).toPath()));
+    }
+
+    public void syncScriptsToServer(Collection<ServerPlayerEntity> players){
+        for (String fileName: listAvailableFiles()){
+            PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
+            passedData.writeString(fileName);
+            try {
+                passedData.writeString(CpuArchMod.SCRIPT_MANAGER.readFile(fileName));
+            } catch (IOException e) {
+                e.printStackTrace();
+                continue;
+            }
+            for(ServerPlayerEntity player:players) {
+                ServerSidePacketRegistry.INSTANCE.sendToPlayer(player, CpuArchMod.SCRIPT_MANAGER_SYNC_S2C, passedData);
+            }
+        }
     }
 }

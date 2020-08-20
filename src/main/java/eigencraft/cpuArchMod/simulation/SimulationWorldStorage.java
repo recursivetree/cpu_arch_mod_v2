@@ -83,7 +83,7 @@ public class SimulationWorldStorage {
             for (JsonElement agentJsonElement:dynamicAgents){
                 JsonObject agentElement = agentJsonElement.getAsJsonObject();
                 BlockPos agentPos = new BlockPos(agentElement.get("x").getAsInt(), agentElement.get("y").getAsInt(), agentElement.get("z").getAsInt());
-                DynamicAgent dynamicAgent = DynamicAgent.getSimulationObject(agentElement.get("type").getAsString());
+                DynamicAgent dynamicAgent = DynamicAgent.createDynamicAgent(agentElement.get("type").getAsString(),world,agentPos);
                 if (agentElement.has("customData")) {
                     dynamicAgent.loadConfig(agentElement.get("customData"));
                 }

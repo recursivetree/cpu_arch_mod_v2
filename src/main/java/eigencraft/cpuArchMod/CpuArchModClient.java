@@ -1,6 +1,7 @@
 package eigencraft.cpuArchMod;
 
 import eigencraft.cpuArchMod.block.ProgrammableAgentBlockEntity;
+import eigencraft.cpuArchMod.gui.CpuArchModScreen;
 import eigencraft.cpuArchMod.gui.ProgrammableAgentGUI;
 import eigencraft.cpuArchMod.script.ClientScriptManager;
 import io.github.cottonmc.cotton.gui.client.CottonClientScreen;
@@ -35,7 +36,7 @@ public class CpuArchModClient implements ClientModInitializer {
             if (errorLog.equals("")) errorLog = null;
             //Weird, but otherwise it won't compile
             String finalErrorLog = errorLog;
-            packetContext.getTaskQueue().execute(() -> MinecraftClient.getInstance().openScreen(new CottonClientScreen(new ProgrammableAgentGUI(currentScriptFileName, currentScript, finalErrorLog, pos))));
+            packetContext.getTaskQueue().execute(() -> MinecraftClient.getInstance().openScreen(new CpuArchModScreen(new ProgrammableAgentGUI(currentScriptFileName, currentScript, finalErrorLog, pos))));
         });
 
         ClientSidePacketRegistry.INSTANCE.register(CpuArchMod.SCRIPT_MANAGER_SYNC_S2C, new PacketConsumer() {

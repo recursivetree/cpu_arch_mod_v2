@@ -3,7 +3,6 @@ package eigencraft.cpuArchMod.simulation;
 import eigencraft.cpuArchMod.CpuArchMod;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -19,6 +18,8 @@ public class SimulationWorld implements Runnable {
     private final File saveDirectory;
     //Because it's in a separate thread, to avoid problems use this task queue
     private final LinkedList<SimulationWorldRunnable> tasks = new LinkedList<>();
+    //Because it's in a separate thread, to avoid problems use this task queue
+    private final LinkedList<WorldRunnable> mainGameThreadTasks = new LinkedList<WorldRunnable>();
     //Used to stop the simulation on server shutdown
     private boolean running = true;
     //All dynamicAgents and their position
@@ -217,5 +218,15 @@ public class SimulationWorld implements Runnable {
 
     public List<PipeNetwork> getPipeNetworks() {
         return pipeNetworkList;
+    }
+
+    public void addMainGameTask(WorldRunnable worldRunnable) {
+        synchronized (mainGameThreadTasks){
+            mainGameThreadTasks.add(worldRunnable);
+        }
+    }
+
+    public LinkedList<WorldRunnable> getMainGameThreadTasks() {
+        return mainGameThreadTasks;
     }
 }

@@ -2,7 +2,7 @@ package eigencraft.cpuArchMod.gui;
 
 import eigencraft.cpuArchMod.CpuArchMod;
 import eigencraft.cpuArchMod.CpuArchModClient;
-import io.github.cottonmc.cotton.gui.client.LightweightGuiDescription;
+import eigencraft.cpuArchMod.networking.ProgrammableAgentConfigurationPacket;
 import io.github.cottonmc.cotton.gui.widget.*;
 import io.github.cottonmc.cotton.gui.widget.data.Color;
 import io.netty.buffer.Unpooled;
@@ -20,12 +20,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-public class ProgrammableAgentGUI extends LightweightGuiDescription {
+public class ProgrammableAgentGUI extends CpuArchModGuiDescription {
     WGridPanel root = new WGridPanel();
     String currentScriptFileName;
     String currentScript;
     String errorLog;
     BlockPos pos;
+    boolean resendScriptInfo = false;
     //File scriptsDirectory = new File(FabricLoader.getInstance().getConfigDirectory(), "cpu_arch_mod_scripts");
     private final List<WWidget> widgets = new ArrayList<>();
 
@@ -142,7 +143,7 @@ public class ProgrammableAgentGUI extends LightweightGuiDescription {
                     }
                     currentScriptFileName = destination.file;
                     buildMainScreen();
-                    safeSettings();
+                    resendScriptInfo = true;
                 }
             });
         };
@@ -152,14 +153,26 @@ public class ProgrammableAgentGUI extends LightweightGuiDescription {
     }
 
     protected void safeSettings() {
-        PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
-        passedData.writeBlockPos(this.pos);
-        passedData.writeString(currentScriptFileName);
-        passedData.writeString(currentScript);
-        passedData.writeString(currentScriptFileName);
-        passedData.writeInt(Color.LIME_DYE.toRgb());
-        // Send packet to server to change the block for us
-        ClientSidePacketRegistry.INSTANCE.sendToServer(CpuArchMod.PROGRAMMABLE_AGENT_SAFE_CONFIG_C2S_PACKET, passedData);
+        ProgrammableAgentConfigurationPacket packet = new ProgrammableAgentConfigurationPacket(
+                pos,resendScriptInfo,currentScript,currentScriptFileName,currentScriptFileName, Color.LIME_DYE.toRgb()
+        );
+
+        ClientSidePacketRegistry.INSTANCE.sendToServer(CpuArchMod.PROGRAMMABLE_AGENT_SAFE_CONFIG_C2S_PACKET, packet.asPacketByteBuf());
+
+//        PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
+//        passedData.writeBlockPos(this.pos);
+//        passedData.writeString(currentScriptFileName);
+//        passedData.writeString(currentScript);
+//        passedData.writeString(currentScriptFileName);
+//        passedData.writeInt(Color.LIME_DYE.toRgb());
+//        // Send packet to server to change the block for us
+//        ClientSidePacketRegistry.INSTANCE.sendToServer(CpuArchMod.PROGRAMMABLE_AGENT_SAFE_CONFIG_C2S_PACKET, passedData);
+    }
+
+    @Override
+    public void onClose() {
+        safeSettings();
+        super.onClose();
     }
 
     protected void addElement(WWidget widget, int x, int y, int width, int height) {

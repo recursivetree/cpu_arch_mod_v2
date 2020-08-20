@@ -36,7 +36,7 @@ public class ProgrammableAgentContainerBlock extends Block implements CpuArchMod
     @Override
     public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack itemStack) {
         if (!world.isClient()) {
-            ((SimulationWorldInterface) world).addSimulationWorldTask(world1 -> world1.addDynamicAgent(pos, new ProgrammableAgent()));
+            ((SimulationWorldInterface) world).addSimulationWorldTask(world1 -> world1.addDynamicAgent(pos, new ProgrammableAgent(world1,pos)));
         }
     }
 
