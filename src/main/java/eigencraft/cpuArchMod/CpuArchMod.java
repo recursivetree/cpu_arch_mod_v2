@@ -4,7 +4,8 @@ package eigencraft.cpuArchMod;
 import eigencraft.cpuArchMod.block.PipeContainer;
 import eigencraft.cpuArchMod.block.ProgrammableAgentBlockEntity;
 import eigencraft.cpuArchMod.block.ProgrammableAgentContainerBlock;
-import eigencraft.cpuArchMod.networking.ProgrammableAgentConfigurationPacket;
+import eigencraft.cpuArchMod.networking.CpuArchModPackets;
+import eigencraft.cpuArchMod.networking.PrgAgentConfigurationC2SPacket;
 import eigencraft.cpuArchMod.script.ServerScriptManager;
 import eigencraft.cpuArchMod.simulation.DynamicAgent;
 import eigencraft.cpuArchMod.simulation.SimulationWorldInterface;
@@ -15,7 +16,6 @@ import net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
-import net.fabricmc.fabric.api.server.PlayerStream;
 import net.minecraft.block.Block;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
@@ -31,7 +31,6 @@ import net.minecraft.util.registry.Registry;
 
 import java.io.File;
 import java.util.Queue;
-import java.util.stream.Stream;
 
 public class CpuArchMod implements ModInitializer {
     public static final String MOD_ID = "cpu_arch_mod";
@@ -46,10 +45,6 @@ public class CpuArchMod implements ModInitializer {
 
     public static final Block PIPE = new PipeContainer();
     public static final Block PROGRAMMABLE_NODE = new ProgrammableAgentContainerBlock();
-
-    public static final Identifier PROGRAMMABLE_AGENT_OPEN_GUI_S2C_PACKET = new Identifier(MOD_ID, "prg_agent_open_s2c");
-    public static final Identifier PROGRAMMABLE_AGENT_SAFE_CONFIG_C2S_PACKET = new Identifier(MOD_ID, "prg_agent_safe_c2s");
-    public static final Identifier SCRIPT_MANAGER_SYNC_S2C = new Identifier(MOD_ID,"script_managers_sync_s2c");
 
 
     public static final Configuration CONFIGURATION = new Configuration();
@@ -98,8 +93,8 @@ public class CpuArchMod implements ModInitializer {
         DynamicAgent.register(ProgrammableAgent.class.getSimpleName(), ProgrammableAgent::new);
 
         //Networking
-        ServerSidePacketRegistry.INSTANCE.register(PROGRAMMABLE_AGENT_SAFE_CONFIG_C2S_PACKET, (packetContext, packetByteBuf) -> {
-            ProgrammableAgentConfigurationPacket packet = ProgrammableAgentConfigurationPacket.readPacket(packetByteBuf);
+        ServerSidePacketRegistry.INSTANCE.register(CpuArchModPackets.PROGRAMMABLE_AGENT_CONFIG_C2S_PACKET, (packetContext, packetByteBuf) -> {
+            PrgAgentConfigurationC2SPacket packet = PrgAgentConfigurationC2SPacket.readPacket(packetByteBuf);
 
             if (packet.hasScriptSrc()) {
                 SCRIPT_MANAGER.store(packet.getScriptFileName(), packet.getScriptSrc());

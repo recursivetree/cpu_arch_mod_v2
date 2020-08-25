@@ -1,15 +1,13 @@
 package eigencraft.cpuArchMod.gui;
 
-import eigencraft.cpuArchMod.CpuArchMod;
 import eigencraft.cpuArchMod.CpuArchModClient;
-import eigencraft.cpuArchMod.networking.ProgrammableAgentConfigurationPacket;
+import eigencraft.cpuArchMod.networking.CpuArchModPackets;
+import eigencraft.cpuArchMod.networking.PrgAgentConfigurationC2SPacket;
 import io.github.cottonmc.cotton.gui.widget.*;
 import io.github.cottonmc.cotton.gui.widget.data.Color;
-import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.network.ClientSidePacketRegistry;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Util;
@@ -44,22 +42,12 @@ public class ProgrammableAgentGUI extends CpuArchModGuiDescription {
         removeElements();
         addElement(new WLabel(new LiteralText(currentScriptFileName)), 1, 0, 8, 1);
         WButton openFileSelectionScreen = new WButton(new TranslatableText("gui.cpu_arch_mod.select_script"));
-        openFileSelectionScreen.setOnClick(new Runnable() {
-            @Override
-            public void run() {
-                buildFileSelectionScreen();
-            }
-        });
+        openFileSelectionScreen.setOnClick(this::buildFileSelectionScreen);
         addElement(openFileSelectionScreen, 6, 0, 4, 1);
 
         if (this.errorLog != null) {
             WButton openErrorMessageScreen = new WButton(new TranslatableText("gui.cpu_arch_mod.open_error_screen"));
-            openErrorMessageScreen.setOnClick(new Runnable() {
-                @Override
-                public void run() {
-                    buildErrorScreen();
-                }
-            });
+            openErrorMessageScreen.setOnClick(this::buildErrorScreen);
             addElement(openErrorMessageScreen, 6, 1, 4, 1);
         }
 
@@ -67,8 +55,8 @@ public class ProgrammableAgentGUI extends CpuArchModGuiDescription {
         TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
         int totalHeight = elements.length * textRenderer.fontHeight + 8;
         int maxWidth = 0;
-        for (int i = 0; i < elements.length; i++) {
-            int width = textRenderer.getWidth(elements[i]);
+        for (String element : elements) {
+            int width = textRenderer.getWidth(element);
             if (width > maxWidth) {
                 maxWidth = width;
             }
@@ -83,20 +71,15 @@ public class ProgrammableAgentGUI extends CpuArchModGuiDescription {
         removeElements();
 
         WButton back = new WButton(new TranslatableText("gui.cpu_arch_mod.back"));
-        back.setOnClick(new Runnable() {
-            @Override
-            public void run() {
-                buildMainScreen();
-            }
-        });
+        back.setOnClick(this::buildMainScreen);
         addElement(back, 0, 0, 3, 1);
 
         String[] elements = errorLog.split(System.lineSeparator());
         TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
         int totalHeight = elements.length * textRenderer.fontHeight + 8;
         int maxWidth = 0;
-        for (int i = 0; i < elements.length; i++) {
-            int width = textRenderer.getWidth(elements[i]);
+        for (String element : elements) {
+            int width = textRenderer.getWidth(element);
             if (width > maxWidth) {
                 maxWidth = width;
             }
@@ -111,21 +94,11 @@ public class ProgrammableAgentGUI extends CpuArchModGuiDescription {
         removeElements();
 
         WButton back = new WButton(new TranslatableText("gui.cpu_arch_mod.back"));
-        back.setOnClick(new Runnable() {
-            @Override
-            public void run() {
-                buildMainScreen();
-            }
-        });
+        back.setOnClick(this::buildMainScreen);
         addElement(back, 0, 0, 3, 1);
 
         WButton openDirectory = new WButton(new TranslatableText("gui.cpu_arch_mod.open_directory"));
-        openDirectory.setOnClick(new Runnable() {
-            @Override
-            public void run() {
-                Util.getOperatingSystem().open(CpuArchModClient.SCRIPT_MANAGER.getScriptsDirectory());
-            }
-        });
+        openDirectory.setOnClick(() -> Util.getOperatingSystem().open(CpuArchModClient.SCRIPT_MANAGER.getScriptsDirectory()));
         addElement(openDirectory, 5, 0, 5, 1);
 
         addElement(new WLabel(new TranslatableText("gui.cpu_arch_mod.available_scripts")), 0, 2, 10, 1);
@@ -133,40 +106,27 @@ public class ProgrammableAgentGUI extends CpuArchModGuiDescription {
         BiConsumer<String, FileListItem> configurator = (String file, FileListItem destination) -> {
             destination.fileName.setText(new LiteralText(file));
             destination.file = file;
-            destination.select.setOnClick(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        currentScript = new String(CpuArchModClient.SCRIPT_MANAGER.readFile(destination.file));
-                    } catch (IOException e) {
-                        return;
-                    }
-                    currentScriptFileName = destination.file;
-                    buildMainScreen();
-                    resendScriptInfo = true;
+            destination.select.setOnClick(() -> {
+                try {
+                    currentScript = CpuArchModClient.SCRIPT_MANAGER.readFile(destination.file);
+                } catch (IOException e) {
+                    return;
                 }
+                currentScriptFileName = destination.file;
+                buildMainScreen();
+                resendScriptInfo = true;
             });
         };
-        WListPanel files = new WListPanel(CpuArchModClient.SCRIPT_MANAGER.listAvailableFiles(), FileListItem::new, configurator);
+        WListPanel<String, FileListItem> files = new WListPanel<>(CpuArchModClient.SCRIPT_MANAGER.listAvailableFiles(), FileListItem::new, configurator);
         files.setListItemHeight(18);
         addElement(files, 0, 3, 10, 7);
     }
 
     protected void safeSettings() {
-        ProgrammableAgentConfigurationPacket packet = new ProgrammableAgentConfigurationPacket(
+        PrgAgentConfigurationC2SPacket packet = new PrgAgentConfigurationC2SPacket(
                 pos,resendScriptInfo,currentScript,currentScriptFileName,currentScriptFileName, Color.LIME_DYE.toRgb()
         );
-
-        ClientSidePacketRegistry.INSTANCE.sendToServer(CpuArchMod.PROGRAMMABLE_AGENT_SAFE_CONFIG_C2S_PACKET, packet.asPacketByteBuf());
-
-//        PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
-//        passedData.writeBlockPos(this.pos);
-//        passedData.writeString(currentScriptFileName);
-//        passedData.writeString(currentScript);
-//        passedData.writeString(currentScriptFileName);
-//        passedData.writeInt(Color.LIME_DYE.toRgb());
-//        // Send packet to server to change the block for us
-//        ClientSidePacketRegistry.INSTANCE.sendToServer(CpuArchMod.PROGRAMMABLE_AGENT_SAFE_CONFIG_C2S_PACKET, passedData);
+        ClientSidePacketRegistry.INSTANCE.sendToServer(CpuArchModPackets.PROGRAMMABLE_AGENT_CONFIG_C2S_PACKET, packet.asPacketByteBuf());
     }
 
     @Override

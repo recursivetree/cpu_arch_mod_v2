@@ -4,7 +4,7 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.math.BlockPos;
 
-public class ProgrammableAgentConfigurationPacket {
+public class PrgAgentConfigurationC2SPacket {
 
     BlockPos pos;
     boolean hasScriptSrc;
@@ -13,7 +13,7 @@ public class ProgrammableAgentConfigurationPacket {
     String displayName;
     int displayColor;
 
-    public ProgrammableAgentConfigurationPacket(BlockPos pos, boolean hasScriptSrc, String scriptSrc, String scriptFileName, String displayName, int displayColor) {
+    public PrgAgentConfigurationC2SPacket(BlockPos pos, boolean hasScriptSrc, String scriptSrc, String scriptFileName, String displayName, int displayColor) {
         this.pos = pos;
         this.hasScriptSrc = hasScriptSrc;
         this.scriptSrc = scriptSrc;
@@ -36,7 +36,7 @@ public class ProgrammableAgentConfigurationPacket {
         return buffer;
     }
 
-    public static ProgrammableAgentConfigurationPacket readPacket(PacketByteBuf buffer){
+    public static PrgAgentConfigurationC2SPacket readPacket(PacketByteBuf buffer){
         BlockPos pos = buffer.readBlockPos();
         boolean hasScriptSrc = buffer.readBoolean();
 
@@ -49,7 +49,7 @@ public class ProgrammableAgentConfigurationPacket {
 
         String displayName = buffer.readString();
         int displayColor = buffer.readInt();
-        return new ProgrammableAgentConfigurationPacket(pos,hasScriptSrc,scriptSrc,scriptFileName,displayName,displayColor);
+        return new PrgAgentConfigurationC2SPacket(pos,hasScriptSrc,scriptSrc,scriptFileName,displayName,displayColor);
     }
 
     public BlockPos getPos() {

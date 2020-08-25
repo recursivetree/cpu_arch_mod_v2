@@ -1,6 +1,7 @@
 package eigencraft.cpuArchMod.block;
 
-import eigencraft.cpuArchMod.CpuArchMod;
+import eigencraft.cpuArchMod.networking.CpuArchModPackets;
+import eigencraft.cpuArchMod.networking.PrgAgentOpenGUIPacket;
 import eigencraft.cpuArchMod.simulation.DynamicAgent;
 import eigencraft.cpuArchMod.simulation.SimulationWorldInterface;
 import eigencraft.cpuArchMod.simulation.agents.ProgrammableAgent;
@@ -55,19 +56,21 @@ public class ProgrammableAgentContainerBlock extends Block implements CpuArchMod
                 DynamicAgent rawAgent = world1.getDynamicAgent(pos);
                 if (rawAgent instanceof ProgrammableAgent) {
                     ProgrammableAgent agent = (ProgrammableAgent) rawAgent;
-                    PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
-                    //The position
-                    passedData.writeBlockPos(pos);
-                    //Filename
-                    passedData.writeString(agent.getScriptFileName());
-                    //script src
-                    passedData.writeString(agent.getScriptSrc());
-                    //error log, if "", the client won't show the log
-                    passedData.writeString(agent.getErrorLog());
+
+                    //Create packet
+                    PrgAgentOpenGUIPacket packet = new PrgAgentOpenGUIPacket(
+                            pos,
+                            agent.getScriptFileName(),
+                            agent.getScriptSrc(),
+                            agent.getErrorLog()
+                    );
+
+
                     //Reset error log
                     agent.resetErrorLog();
+
                     //Send package
-                    ServerSidePacketRegistry.INSTANCE.sendToPlayer(player, CpuArchMod.PROGRAMMABLE_AGENT_OPEN_GUI_S2C_PACKET, passedData);
+                    ServerSidePacketRegistry.INSTANCE.sendToPlayer(player, CpuArchModPackets.PROGRAMMABLE_AGENT_OPEN_GUI_S2C_PACKET, packet.asPacketByteBuffer());
                 }
             });
         }

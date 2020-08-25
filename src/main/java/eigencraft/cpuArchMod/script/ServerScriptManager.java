@@ -1,10 +1,10 @@
 package eigencraft.cpuArchMod.script;
 
 import eigencraft.cpuArchMod.CpuArchMod;
-import io.netty.buffer.Unpooled;
+import eigencraft.cpuArchMod.networking.CpuArchModPackets;
+import eigencraft.cpuArchMod.networking.ScriptSyncS2CPacket;
 import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
 import net.fabricmc.fabric.api.server.PlayerStream;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 
@@ -13,9 +13,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class ServerScriptManager {
     private File localFilesDirectory;
@@ -62,21 +60,12 @@ public class ServerScriptManager {
 
     public void syncScriptsToServer(ServerPlayerEntity srcPlayer, MinecraftServer server){
         for (String fileName: listAvailableFiles()){
-            PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
-            passedData.writeString(fileName);
             try {
-                passedData.writeString(CpuArchMod.SCRIPT_MANAGER.readFile(fileName));
+                ScriptSyncS2CPacket scriptPacket = new ScriptSyncS2CPacket(fileName,CpuArchMod.SCRIPT_MANAGER.readFile(fileName));
+                PlayerStream.all(server).filter(p->p!=srcPlayer).forEach(player-> ServerSidePacketRegistry.INSTANCE.sendToPlayer(player, CpuArchModPackets.SYNC_SCRIPT_S2C, scriptPacket.asPacketByteBuffer()));
             } catch (IOException e) {
                 e.printStackTrace();
-                continue;
             }
-            PlayerStream.all(server).filter(p->p!=srcPlayer).forEach(player->{
-                ServerSidePacketRegistry.INSTANCE.sendToPlayer(player, CpuArchMod.SCRIPT_MANAGER_SYNC_S2C, passedData);
-                System.out.println(player);
-            });
-            //for(ServerPlayerEntity player:players) {
-            //    ServerSidePacketRegistry.INSTANCE.sendToPlayer(player, CpuArchMod.SCRIPT_MANAGER_SYNC_S2C, passedData);
-            //}
         }
     }
 }
