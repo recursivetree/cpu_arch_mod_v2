@@ -30,9 +30,8 @@ import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.registry.Registry;
 
 import java.io.File;
-import java.util.List;
 import java.util.Queue;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CpuArchMod implements ModInitializer {
     public static final String MOD_ID = "cpu_arch_mod";
@@ -104,8 +103,9 @@ public class CpuArchMod implements ModInitializer {
 
             if (packet.hasScriptSrc()) {
                 SCRIPT_MANAGER.store(packet.getScriptFileName(), packet.getScriptSrc());
-                List<ServerPlayerEntity> players =  PlayerStream.all(packetContext.getPlayer().getServer()).filter(c -> c == packetContext.getPlayer()).collect(Collectors.toList());
-                SCRIPT_MANAGER.syncScriptsToServer(players);
+
+                SCRIPT_MANAGER.syncScriptsToServer((ServerPlayerEntity) packetContext.getPlayer(),packetContext.getPlayer().getServer());
+
                 ServerWorld world = (ServerWorld) packetContext.getPlayer().getEntityWorld();
                 ((SimulationWorldInterface) world).addSimulationWorldTask(world1 -> {
                     DynamicAgent simAgent = world1.getDynamicAgent(packet.getPos());

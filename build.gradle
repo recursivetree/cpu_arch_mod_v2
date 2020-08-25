@@ -23,7 +23,8 @@ dependencies {
 	implementation 'com.google.code.gson:gson:2.8.6'
 
 	//Lua
-	implementation 'org.luaj:luaj-jse:3.0.1'
+	modImplementation 'org.luaj:luaj-jse:3.0.1'
+	include 'org.luaj:luaj-jse:3.0.1'
 
 	//to change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -34,6 +35,7 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 	modImplementation "io.github.cottonmc:LibGui:3.0.0-beta.1+1.16.2-rc2"
+	include "io.github.cottonmc:LibGui:3.0.0-beta.1+1.16.2-rc2"
 }
 
 processResources {

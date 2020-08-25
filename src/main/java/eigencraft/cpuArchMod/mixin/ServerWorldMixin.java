@@ -44,6 +44,6 @@ public class ServerWorldMixin implements SimulationWorldInterface {
 
     @Inject(method = "<init>(Lnet/minecraft/server/MinecraftServer;Ljava/util/concurrent/Executor;Lnet/minecraft/world/level/storage/LevelStorage$Session;Lnet/minecraft/world/level/ServerWorldProperties;Lnet/minecraft/util/registry/RegistryKey;Lnet/minecraft/world/dimension/DimensionType;Lnet/minecraft/server/WorldGenerationProgressListener;Lnet/minecraft/world/gen/chunk/ChunkGenerator;ZJLjava/util/List;Z)V", at = @At("RETURN"))
     public void constructor(MinecraftServer server, Executor workerExecutor, LevelStorage.Session session, ServerWorldProperties properties, RegistryKey<World> registryKey, DimensionType dimensionType, WorldGenerationProgressListener worldGenerationProgressListener, ChunkGenerator chunkGenerator, boolean bl, long l, List<Spawner> list, boolean bl2, CallbackInfo ci) {
-        simulationWorld = new SimulationWorld(session.getWorldDirectory(registryKey), (ServerWorld) (Object) this);
+        simulationWorld = new SimulationWorld(session.getWorldDirectory(registryKey), (ServerWorld) (Object) this,registryKey.getValue().toString());
     }
 }

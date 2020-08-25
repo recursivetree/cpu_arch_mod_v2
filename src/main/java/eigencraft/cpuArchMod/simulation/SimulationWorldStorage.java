@@ -3,6 +3,7 @@ package eigencraft.cpuArchMod.simulation;
 import com.google.gson.*;
 import net.minecraft.util.math.BlockPos;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -12,6 +13,7 @@ import java.util.Map;
 
 public class SimulationWorldStorage {
     public static final int SAVE_VERSION = 2;
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public static void saveWorld(SimulationWorld world, File savesDirectory){
         JsonObject root = new JsonObject();
@@ -67,16 +69,16 @@ public class SimulationWorldStorage {
         try {
             root = JsonParser.parseString(new String(Files.readAllBytes(new File(savesDirectory,"cpu_logic.json").toPath()))).getAsJsonObject();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error(String.format("Failed to load simulation world: %s",e.toString()));
             return;
         }
         try {
             int found_version = root.get("version").getAsInt();
             if (found_version > SAVE_VERSION) {
-                LogManager.getLogger().warn("Found simulation chunk from newer mod version!");
+                LOGGER.warn("Found simulation chunk from newer mod version!");
             } else if (found_version < SAVE_VERSION) {
                 //TODO upgrade system?
-                LogManager.getLogger().warn(String.format("Found simulation chunk from older mod version! Found: %d, running version: %d", found_version, SAVE_VERSION));
+                LOGGER.warn(String.format("Found simulation chunk from older mod version! Found: %d, running version: %d", found_version, SAVE_VERSION));
             }
 
             JsonArray dynamicAgents = root.getAsJsonArray("dynamicAgents");

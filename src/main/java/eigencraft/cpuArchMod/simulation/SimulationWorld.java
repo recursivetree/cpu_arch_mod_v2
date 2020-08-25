@@ -27,9 +27,9 @@ public class SimulationWorld implements Runnable {
     //All pipe Networks
     private final List<PipeNetwork> pipeNetworkList = new ArrayList<>();
 
-    public SimulationWorld(File cpu_sim_directory, ServerWorld serverWorld) {
+    public SimulationWorld(File cpu_sim_directory, ServerWorld serverWorld, String level_name) {
         //Create Thread
-        simulationThread = new Thread(this);
+        simulationThread = new Thread(this,String.format("cpu simulation: %s",level_name));
         //Store the saves directory
         saveDirectory = cpu_sim_directory;
         //If not existent, create the directory

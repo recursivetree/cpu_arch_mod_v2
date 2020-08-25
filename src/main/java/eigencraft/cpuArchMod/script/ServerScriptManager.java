@@ -3,7 +3,9 @@ package eigencraft.cpuArchMod.script;
 import eigencraft.cpuArchMod.CpuArchMod;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
+import net.fabricmc.fabric.api.server.PlayerStream;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.io.File;
@@ -58,7 +60,7 @@ public class ServerScriptManager {
         return new String(Files.readAllBytes(new File(localFilesDirectory,file).toPath()));
     }
 
-    public void syncScriptsToServer(Collection<ServerPlayerEntity> players){
+    public void syncScriptsToServer(ServerPlayerEntity srcPlayer, MinecraftServer server){
         for (String fileName: listAvailableFiles()){
             PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
             passedData.writeString(fileName);
@@ -68,9 +70,13 @@ public class ServerScriptManager {
                 e.printStackTrace();
                 continue;
             }
-            for(ServerPlayerEntity player:players) {
+            PlayerStream.all(server).filter(p->p!=srcPlayer).forEach(player->{
                 ServerSidePacketRegistry.INSTANCE.sendToPlayer(player, CpuArchMod.SCRIPT_MANAGER_SYNC_S2C, passedData);
-            }
+                System.out.println(player);
+            });
+            //for(ServerPlayerEntity player:players) {
+            //    ServerSidePacketRegistry.INSTANCE.sendToPlayer(player, CpuArchMod.SCRIPT_MANAGER_SYNC_S2C, passedData);
+            //}
         }
     }
 }
