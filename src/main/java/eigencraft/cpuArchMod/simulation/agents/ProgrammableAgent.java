@@ -40,7 +40,7 @@ public class ProgrammableAgent extends DynamicAgent {
         api.register("onRedstoneSignal", ON_REDSTONE_SIGNAL);
         api.register("onMessage", ON_MESSAGE);
         api.register("publish", new MessagePublisher());
-        luaScript.compileCode("", CpuArchMod.CONFIGURATION.getScriptExecutionTimeout(), api,"default");
+        luaScript.compileCode("", CpuArchMod.CONFIGURATION.SCRIPT_EXECUTION_TIMEOUT, api,"default");
     }
 
     public String getScriptFileName() {
@@ -66,7 +66,7 @@ public class ProgrammableAgent extends DynamicAgent {
     public void setScriptSrc(String scriptSrc) {
         this.scriptSrc = scriptSrc;
         try {
-            luaScript.compileCode(scriptSrc, CpuArchMod.CONFIGURATION.getScriptExecutionTimeout(), api, scriptFileName);
+            luaScript.compileCode(scriptSrc, CpuArchMod.CONFIGURATION.SCRIPT_EXECUTION_TIMEOUT, api, scriptFileName);
         } catch (LuaError luaError) {
             luaError.printStackTrace();
             handleLuaError(luaError);

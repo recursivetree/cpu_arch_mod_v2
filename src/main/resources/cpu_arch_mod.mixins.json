@@ -8,6 +8,7 @@
     "PlayerManagerMixin"
   ],
   "client": [
+    "ClientLoginNetworkHandlerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

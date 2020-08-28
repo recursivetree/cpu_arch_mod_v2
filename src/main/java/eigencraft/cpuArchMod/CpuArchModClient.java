@@ -19,8 +19,8 @@ import net.minecraft.network.PacketByteBuf;
 import java.io.File;
 
 public class CpuArchModClient implements ClientModInitializer {
-
-    public static ClientScriptManager SCRIPT_MANAGER = new ClientScriptManager(new File(new File(FabricLoader.getInstance().getConfigDir().toFile(), "cpu_arch_mod_scripts"),"temp"));
+    public static ClientSideConfiguration CONFIGURATION = new ClientSideConfiguration();
+    public static ClientScriptManager SCRIPT_MANAGER = new ClientScriptManager();
 
     @Override
     public void onInitializeClient() {

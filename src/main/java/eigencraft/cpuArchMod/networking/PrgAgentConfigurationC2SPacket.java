@@ -43,11 +43,11 @@ public class PrgAgentConfigurationC2SPacket {
         String scriptSrc = null;
         String scriptFileName = null;
         if (hasScriptSrc){
-            scriptFileName = buffer.readString();
-            scriptSrc = buffer.readString();
+            scriptFileName = buffer.readString(32767);
+            scriptSrc = buffer.readString(32767);
         }
 
-        String displayName = buffer.readString();
+        String displayName = buffer.readString(32767);
         int displayColor = buffer.readInt();
         return new PrgAgentConfigurationC2SPacket(pos,hasScriptSrc,scriptSrc,scriptFileName,displayName,displayColor);
     }
