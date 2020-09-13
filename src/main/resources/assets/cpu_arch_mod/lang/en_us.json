@@ -7,5 +7,6 @@
   "gui.cpu_arch_mod.open_error_screen": "Show errors",
   "block.cpu_arch_mod.node": "Programmable node",
   "block.cpu_arch_mod.pipe": "Data pipe",
-  "itemGroup.cpu_arch_mod.items": "CPU blocks"
+  "itemGroup.cpu_arch_mod.items": "CPU blocks",
+  "gui.cpu_arch_mod.download": "download"
 }

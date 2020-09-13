@@ -20,7 +20,8 @@ repositories {
 
 dependencies {
 	//GSON
-	implementation 'com.google.code.gson:gson:2.8.6'
+	//modImplementation 'com.google.code.gson:gson:2.8.6'
+	//include 'com.google.code.gson:gson:2.8.6'
 
 	//Lua
 	modImplementation 'org.luaj:luaj-jse:3.0.1'

@@ -8,6 +8,8 @@ import eigencraft.cpuArchMod.block.ProgrammableAgentBlockEntity;
 import eigencraft.cpuArchMod.block.ProgrammableAgentContainerBlock;
 import eigencraft.cpuArchMod.networking.CpuArchModPackets;
 import eigencraft.cpuArchMod.networking.PrgAgentConfigurationC2SPacket;
+import eigencraft.cpuArchMod.networking.ScriptRequestC2SPacket;
+import eigencraft.cpuArchMod.script.Script;
 import eigencraft.cpuArchMod.script.ServerScriptManager;
 import eigencraft.cpuArchMod.simulation.DynamicAgent;
 import eigencraft.cpuArchMod.simulation.SimulationWorldInterface;
@@ -17,6 +19,8 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.network.PacketConsumer;
+import net.fabricmc.fabric.api.network.PacketContext;
 import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
@@ -26,6 +30,7 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
@@ -34,8 +39,12 @@ import net.minecraft.util.registry.Registry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Queue;
+import java.util.UUID;
 
 public class CpuArchMod implements ModInitializer {
     public static final String MOD_ID = "cpu_arch_mod";
@@ -101,6 +110,7 @@ public class CpuArchMod implements ModInitializer {
             for (ServerWorld world : minecraftServer.getWorlds()) {
                 ((SimulationWorldInterface) world).stopSimulation();
             }
+            SCRIPT_MANAGER.saveIndexFile();
         });
 
         //Setup server script manager
@@ -124,17 +134,20 @@ public class CpuArchMod implements ModInitializer {
             PrgAgentConfigurationC2SPacket packet = PrgAgentConfigurationC2SPacket.readPacket(packetByteBuf);
 
             if (packet.hasScriptSrc()) {
-                SCRIPT_MANAGER.store(packet.getScriptFileName(), packet.getScriptSrc());
-
-                SCRIPT_MANAGER.syncScriptsToServer((ServerPlayerEntity) packetContext.getPlayer(),packetContext.getPlayer().getServer());
+                Script script;
+                if (SCRIPT_MANAGER.scriptExists(packet.getScriptFileName())){
+                    script = SCRIPT_MANAGER.getScript(packet.getScriptFileName());
+                } else {
+                    script = new Script(packet.getScriptFileName(), UUID.randomUUID());
+                }
+                SCRIPT_MANAGER.store(script, packet.getScriptSrc());
 
                 ServerWorld world = (ServerWorld) packetContext.getPlayer().getEntityWorld();
                 ((SimulationWorldInterface) world).addSimulationWorldTask(world1 -> {
                     DynamicAgent simAgent = world1.getDynamicAgent(packet.getPos());
                     if (simAgent instanceof ProgrammableAgent) {
                         ProgrammableAgent agent = (ProgrammableAgent) simAgent;
-                        agent.setScriptFileName(packet.getScriptFileName());
-                        agent.setScriptSrc(packet.getScriptSrc());
+                        agent.setScript(script);
                     }
                 });
             }
@@ -146,6 +159,14 @@ public class CpuArchMod implements ModInitializer {
                     }
                 }
             });
+        });
+
+        ServerSidePacketRegistry.INSTANCE.register(CpuArchModPackets.SCRIPT_REQUEST_C2S, new PacketConsumer() {
+            @Override
+            public void accept(PacketContext packetContext, PacketByteBuf packetByteBuf) {
+                ScriptRequestC2SPacket packet = ScriptRequestC2SPacket.readPacket(packetByteBuf);
+                SCRIPT_MANAGER.answerScriptRequestPacket(packet,packetContext.getPlayer());
+            }
         });
 
         //End of setup

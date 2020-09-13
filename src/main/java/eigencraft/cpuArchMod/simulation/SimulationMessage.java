@@ -1,18 +1,23 @@
 package eigencraft.cpuArchMod.simulation;
 
 
-import org.luaj.vm2.LuaTable;
+import org.luaj.vm2.LuaValue;
 
 public class SimulationMessage {
-    private final LuaTable dataObject;
+    private final LuaValue dataObject;
+    private final String type;
 
-    public SimulationMessage(LuaTable dataObject) {
+    public SimulationMessage(LuaValue dataObject,String type) {
         this.dataObject = dataObject;
+        this.type = type;
     }
 
-    public LuaTable getAsLuaValue() {
+    public LuaValue getAsLuaValue() {
         return dataObject;
     }
 
 
+    public String getType() {
+        return type;
+    }
 }

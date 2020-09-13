@@ -65,9 +65,10 @@ public class SimulationWorldStorage {
     }
 
     public static void loadWorld(SimulationWorld world,File savesDirectory){
+        LOGGER.info("Loading simulation world");
         JsonObject root;
         try {
-            root = JsonParser.parseString(new String(Files.readAllBytes(new File(savesDirectory,"cpu_logic.json").toPath()))).getAsJsonObject();
+            root = new JsonParser().parse(new String(Files.readAllBytes(new File(savesDirectory,"cpu_logic.json").toPath()))).getAsJsonObject();
         } catch (IOException e) {
             LOGGER.error(String.format("Failed to load simulation world: %s",e.toString()));
             return;

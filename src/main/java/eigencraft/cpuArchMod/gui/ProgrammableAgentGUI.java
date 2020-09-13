@@ -25,8 +25,8 @@ public class ProgrammableAgentGUI extends CpuArchModGuiDescription {
     String errorLog;
     BlockPos pos;
     boolean resendScriptInfo = false;
-    //File scriptsDirectory = new File(FabricLoader.getInstance().getConfigDirectory(), "cpu_arch_mod_scripts");
     private final List<WWidget> widgets = new ArrayList<>();
+    private static final int width = 15;
 
     public ProgrammableAgentGUI(String currentScriptFileName, String currentScript, String errorLog, BlockPos pos) {
         setRootPanel(root);
@@ -34,7 +34,7 @@ public class ProgrammableAgentGUI extends CpuArchModGuiDescription {
         this.currentScriptFileName = currentScriptFileName;
         this.currentScript = currentScript;
         this.errorLog = errorLog;
-        root.setSize(180, 180);
+        root.setSize(width*18, 180);
         buildMainScreen();
     }
 
@@ -43,12 +43,12 @@ public class ProgrammableAgentGUI extends CpuArchModGuiDescription {
         addElement(new WLabel(new LiteralText(currentScriptFileName)), 1, 0, 8, 1);
         WButton openFileSelectionScreen = new WButton(new TranslatableText("gui.cpu_arch_mod.select_script"));
         openFileSelectionScreen.setOnClick(this::buildFileSelectionScreen);
-        addElement(openFileSelectionScreen, 6, 0, 4, 1);
+        addElement(openFileSelectionScreen, width-4, 0, 4, 1);
 
         if (this.errorLog != null) {
             WButton openErrorMessageScreen = new WButton(new TranslatableText("gui.cpu_arch_mod.open_error_screen"));
             openErrorMessageScreen.setOnClick(this::buildErrorScreen);
-            addElement(openErrorMessageScreen, 6, 1, 4, 1);
+            addElement(openErrorMessageScreen, width-4, 1, 4, 1);
         }
 
         String[] elements = currentScript.split(System.lineSeparator());
@@ -64,7 +64,7 @@ public class ProgrammableAgentGUI extends CpuArchModGuiDescription {
         WText srcPreview = new WText(new LiteralText(currentScript));
         srcPreview.setSize(maxWidth + 8, totalHeight);
         WScrollPanel scrollPanel = new WScrollPanel(srcPreview);
-        addElement(scrollPanel, 0, 2, 10, 8);
+        addElement(scrollPanel, 0, 2, width, 8);
     }
 
     protected void buildErrorScreen() {
@@ -87,7 +87,7 @@ public class ProgrammableAgentGUI extends CpuArchModGuiDescription {
         WText srcPreview = new WText(new LiteralText(errorLog));
         srcPreview.setSize(maxWidth + 8, totalHeight);
         WScrollPanel scrollPanel = new WScrollPanel(srcPreview);
-        addElement(scrollPanel, 0, 2, 10, 8);
+        addElement(scrollPanel, 0, 2, width, 8);
     }
 
     protected void buildFileSelectionScreen() {
@@ -99,9 +99,9 @@ public class ProgrammableAgentGUI extends CpuArchModGuiDescription {
 
         WButton openDirectory = new WButton(new TranslatableText("gui.cpu_arch_mod.open_directory"));
         openDirectory.setOnClick(() -> Util.getOperatingSystem().open(CpuArchModClient.SCRIPT_MANAGER.getScriptsDirectory()));
-        addElement(openDirectory, 5, 0, 5, 1);
+        addElement(openDirectory, width-5, 0, 5, 1);
 
-        addElement(new WLabel(new TranslatableText("gui.cpu_arch_mod.available_scripts")), 0, 2, 10, 1);
+        addElement(new WLabel(new TranslatableText("gui.cpu_arch_mod.available_scripts")), 0, 2, width, 1);
 
         BiConsumer<String, FileListItem> configurator = (String file, FileListItem destination) -> {
             destination.fileName.setText(new LiteralText(file));
@@ -116,10 +116,17 @@ public class ProgrammableAgentGUI extends CpuArchModGuiDescription {
                 buildMainScreen();
                 resendScriptInfo = true;
             });
+            destination.download.setOnClick(new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println("click");
+                    CpuArchModClient.SCRIPT_MANAGER.requestScript(destination.file);
+                }
+            });
         };
         WListPanel<String, FileListItem> files = new WListPanel<>(CpuArchModClient.SCRIPT_MANAGER.listAvailableFiles(), FileListItem::new, configurator);
         files.setListItemHeight(18);
-        addElement(files, 0, 3, 10, 7);
+        addElement(files, 0, 3, width, 7);
     }
 
     protected void safeSettings() {
@@ -150,11 +157,13 @@ public class ProgrammableAgentGUI extends CpuArchModGuiDescription {
         private static final LiteralText defaultText = new LiteralText("internal error");
         WLabel fileName = new WLabel(defaultText);
         WButton select = new WButton(new TranslatableText("gui.cpu_arch_mod.select"));
+        WButton download = new WButton(new TranslatableText("gui.cpu_arch_mod.download"));
         String file;
 
         public FileListItem() {
             add(fileName, 0, 2);
-            add(select, 90, 0, 54, 18);
+            add(select, 180, 0, 54, 18);
+            add(download,126,0,54,18);
         }
     }
 }

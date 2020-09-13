@@ -1,6 +1,9 @@
 package eigencraft.cpuArchMod.script;
 
-import eigencraft.cpuArchMod.CpuArchModClient;
+import eigencraft.cpuArchMod.networking.CpuArchModPackets;
+import eigencraft.cpuArchMod.networking.ScriptDownloadS2CPacket;
+import eigencraft.cpuArchMod.networking.ScriptRequestC2SPacket;
+import net.fabricmc.fabric.api.network.ClientSidePacketRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.File;
@@ -12,6 +15,7 @@ import java.util.List;
 
 public class ClientScriptManager {
     private File localFilesDirectory;
+    private List<String> requestedScriptFiles = new ArrayList<>();
 
     public ClientScriptManager() {
         setWorldDirectory("shared");
@@ -42,9 +46,9 @@ public class ClientScriptManager {
         return files;
     }
 
-    public void store(String fileName, String src) {
+    private void store(String fileName, String src) {
         try {
-            FileWriter writer = new FileWriter(new File(localFilesDirectory,fileName));
+            FileWriter writer = new FileWriter(new File(localFilesDirectory, fileName));
             writer.write(src);
             writer.close();
         } catch (IOException e) {
@@ -57,13 +61,32 @@ public class ClientScriptManager {
     }
 
     public void setWorldDirectory(String name) {
-        File directory = new File(new File(FabricLoader.getInstance().getConfigDir().toFile(), "cpu_arch_mod_scripts"),(name.equals("") ? CpuArchModClient.CONFIGURATION.DEFAULT_SCRIPT_DIRECTORY_NAME : name));
+        File directory = new File(new File(FabricLoader.getInstance().getConfigDir().toFile(), "cpu_arch_mod_scripts"), name);
 
-        if (CpuArchModClient.CONFIGURATION.USE_WORLD_DIRECTORIES&&localFilesDirectory==null) {
-            directory = new File(new File(FabricLoader.getInstance().getConfigDir().toFile(), "cpu_arch_mod_scripts"),CpuArchModClient.CONFIGURATION.DEFAULT_SCRIPT_DIRECTORY_NAME);
+        if (!ensureDirectory(directory)) {
+            setWorldDirectory("default");
+            return;
         }
-
-        if (!ensureDirectory(directory)) setWorldDirectory(CpuArchModClient.CONFIGURATION.DEFAULT_SCRIPT_DIRECTORY_NAME);
         localFilesDirectory = directory;
+    }
+
+    public void processScriptDownloadPacket(ScriptDownloadS2CPacket packet) {
+        System.out.println("back");
+        if (packet.getSuccess()) {
+            System.out.println("success packet");
+            System.out.println(packet.getFileName());
+            if (requestedScriptFiles.contains(packet.getFileName())) {
+                System.out.println("expected packet");
+                this.store(packet.getFileName(), packet.getFileSrc());
+            }
+        }
+    }
+
+
+    public void requestScript(String scriptName) {
+        requestedScriptFiles.add(scriptName);
+        ScriptRequestC2SPacket packet = new ScriptRequestC2SPacket(scriptName);
+        ClientSidePacketRegistry.INSTANCE.sendToServer(CpuArchModPackets.SCRIPT_REQUEST_C2S, packet.asPacketByteBuffer());
+        System.out.println("sent");
     }
 }

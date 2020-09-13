@@ -153,8 +153,6 @@ public class SimulationWorld implements Runnable {
         else {
             //TODO efficient pipe splitting algorithm
 
-            //THIS IS BAD AND SLOW CODE!!!
-
             //First, get the network to split and check if it exists
             PipeNetwork toSplit = getSimulationNetworkAt(pos);
             if (toSplit != null) {

@@ -49,9 +49,14 @@ public class LuaScript {
         function.call();
     }
 
-    public void execute(LuaValue callback, LuaTable arg) {
+    public void execute(LuaValue callback, LuaValue arg) {
         watchDog.resetTimer();
         callback.call(arg);
+    }
+
+    public void execute(LuaValue callback, LuaValue arg1, LuaString arg2) {
+        watchDog.resetTimer();
+        callback.call(arg1,arg2);
     }
 
     /***

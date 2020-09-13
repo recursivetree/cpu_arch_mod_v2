@@ -26,7 +26,7 @@ public class LuaAPI {
     }
 
     public static class LuaCallback extends TwoArgFunction {
-        private LuaValue callback = LuaValue.NIL;
+        private LuaValue callback = null;
 
         public LuaValue getCallback() {
             return callback;

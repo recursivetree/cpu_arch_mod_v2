@@ -5,21 +5,17 @@ import eigencraft.cpuArchMod.gui.CpuArchModScreen;
 import eigencraft.cpuArchMod.gui.ProgrammableAgentGUI;
 import eigencraft.cpuArchMod.networking.CpuArchModPackets;
 import eigencraft.cpuArchMod.networking.PrgAgentOpenGUIPacket;
-import eigencraft.cpuArchMod.networking.ScriptSyncS2CPacket;
+import eigencraft.cpuArchMod.networking.ScriptDownloadS2CPacket;
 import eigencraft.cpuArchMod.script.ClientScriptManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendereregistry.v1.BlockEntityRendererRegistry;
 import net.fabricmc.fabric.api.network.ClientSidePacketRegistry;
 import net.fabricmc.fabric.api.network.PacketConsumer;
 import net.fabricmc.fabric.api.network.PacketContext;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.network.PacketByteBuf;
 
-import java.io.File;
-
 public class CpuArchModClient implements ClientModInitializer {
-    public static ClientSideConfiguration CONFIGURATION = new ClientSideConfiguration();
     public static ClientScriptManager SCRIPT_MANAGER = new ClientScriptManager();
 
     @Override
@@ -45,11 +41,11 @@ public class CpuArchModClient implements ClientModInitializer {
             );
         });
 
-        ClientSidePacketRegistry.INSTANCE.register(CpuArchModPackets.SYNC_SCRIPT_S2C, new PacketConsumer() {
+        ClientSidePacketRegistry.INSTANCE.register(CpuArchModPackets.SCRIPT_DOWNLOAD_S2C, new PacketConsumer() {
             @Override
             public void accept(PacketContext context, PacketByteBuf buffer) {
-                ScriptSyncS2CPacket scriptPacket = ScriptSyncS2CPacket.readPacket(buffer);
-                CpuArchModClient.SCRIPT_MANAGER.store(scriptPacket.getFileName(), scriptPacket.getFileSrc());
+                ScriptDownloadS2CPacket scriptPacket = ScriptDownloadS2CPacket.readPacket(buffer);
+                CpuArchModClient.SCRIPT_MANAGER.processScriptDownloadPacket(scriptPacket);
             }
         });
     }
