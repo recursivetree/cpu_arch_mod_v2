@@ -6,16 +6,12 @@ import eigencraft.cpuArchMod.networking.CpuArchModPackets;
 import eigencraft.cpuArchMod.networking.ScriptDownloadS2CPacket;
 import eigencraft.cpuArchMod.networking.ScriptRequestC2SPacket;
 import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
-import net.fabricmc.fabric.api.server.PlayerStream;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.UUID;
 
 public class ServerScriptManager {
@@ -97,14 +93,20 @@ public class ServerScriptManager {
     public void answerScriptRequestPacket(ScriptRequestC2SPacket packet, PlayerEntity player) {
         ScriptDownloadS2CPacket responsePacket;
         try{
-            if (scripts.containsKey(packet.getFileName())) {
-                Script requested = scripts.get(packet.getFileName());
-                responsePacket = new ScriptDownloadS2CPacket(true, packet.getFileName(), readScript(requested));
+            Script requested = null;
+            for (Script script:scripts.values()){
+                if (script.getUUID().equals(packet.getUUID())){
+                    requested = script;
+                    break;
+                }
+            }
+            if (requested==null){
+                responsePacket = new ScriptDownloadS2CPacket(false, packet.getUUID(), "");
             } else {
-                responsePacket = new ScriptDownloadS2CPacket(false, packet.getFileName(), "");
+                responsePacket = new ScriptDownloadS2CPacket(true, packet.getUUID(), readScript(requested));
             }
         } catch (IOException e){
-            responsePacket = new ScriptDownloadS2CPacket(false,"","");
+            responsePacket = new ScriptDownloadS2CPacket(false,packet.getUUID(),"");
         }
         ServerSidePacketRegistry.INSTANCE.sendToPlayer(player,CpuArchModPackets.SCRIPT_DOWNLOAD_S2C,responsePacket.asPacketByteBuffer());
     }
@@ -125,5 +127,9 @@ public class ServerScriptManager {
             }
         }
         return null;
+    }
+
+    public Collection<Script> listScripts() {
+        return scripts.values();
     }
 }

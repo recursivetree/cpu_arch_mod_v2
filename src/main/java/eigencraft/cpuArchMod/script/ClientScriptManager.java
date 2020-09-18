@@ -12,15 +12,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class ClientScriptManager {
     private File localFilesDirectory;
-    private List<String> requestedScriptFiles = new ArrayList<>();
+    private final List<UUID> requestedScriptFiles = new ArrayList<UUID>();
+    private final List<ClientScript> serverSideScripts = new ArrayList<>();
 
     public ClientScriptManager() {
         setWorldDirectory("shared");
     }
-
 
     private static boolean ensureDirectory(File localFilesDirectory) {
         if (!localFilesDirectory.isDirectory()) {
@@ -33,17 +34,31 @@ public class ClientScriptManager {
         return localFilesDirectory;
     }
 
-    public List<String> listAvailableFiles() {
-        List<String> files = new ArrayList<>();
+    public List<ClientScript> listAvailableScripts() {
+        List<ClientScript> files = new ArrayList<>();
         File[] dir_objects = localFilesDirectory.listFiles();
         if (dir_objects!=null) {
             for (File dir_object : dir_objects) {
                 if (dir_object.isFile()) {
-                    files.add(dir_object.getName());
+                    boolean existServerSide = false;
+                    for(ClientScript script:serverSideScripts){
+                        if (script.getName().equals(dir_object.getName())){
+                            files.add(new ClientScript(dir_object.getName(), script.getUUID(), ClientScript.SCRIPT_TYPE.CLIENTSIDE));
+                            existServerSide = true;
+                        }
+                    }
+                    if (!existServerSide) {
+                        files.add(new ClientScript(dir_object.getName(), UUID.randomUUID(), ClientScript.SCRIPT_TYPE.CLIENTSIDE));
+                    }
                 }
             }
         }
+        files.addAll(serverSideScripts);
         return files;
+    }
+
+    public void addServerSideScript(ClientScript script){
+        this.serverSideScripts.add(script);
     }
 
     private void store(String fileName, String src) {
@@ -71,21 +86,22 @@ public class ClientScriptManager {
     }
 
     public void processScriptDownloadPacket(ScriptDownloadS2CPacket packet) {
-        System.out.println("back");
         if (packet.getSuccess()) {
-            System.out.println("success packet");
-            System.out.println(packet.getFileName());
-            if (requestedScriptFiles.contains(packet.getFileName())) {
-                System.out.println("expected packet");
-                this.store(packet.getFileName(), packet.getFileSrc());
+            if (requestedScriptFiles.contains(packet.getUUID())) {
+                for(ClientScript script:serverSideScripts){
+                    if (script.getUUID().equals(packet.getUUID())){
+                        this.store(script.getName(), packet.getFileSrc());
+                        break;
+                    }
+                }
             }
         }
     }
 
 
-    public void requestScript(String scriptName) {
-        requestedScriptFiles.add(scriptName);
-        ScriptRequestC2SPacket packet = new ScriptRequestC2SPacket(scriptName);
+    public void requestScript(ClientScript script) {
+        requestedScriptFiles.add(script.getUUID());
+        ScriptRequestC2SPacket packet = new ScriptRequestC2SPacket(script);
         ClientSidePacketRegistry.INSTANCE.sendToServer(CpuArchModPackets.SCRIPT_REQUEST_C2S, packet.asPacketByteBuffer());
         System.out.println("sent");
     }

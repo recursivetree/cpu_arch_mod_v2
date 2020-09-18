@@ -3,6 +3,7 @@ package eigencraft.cpuArchMod.gui;
 import eigencraft.cpuArchMod.CpuArchModClient;
 import eigencraft.cpuArchMod.networking.CpuArchModPackets;
 import eigencraft.cpuArchMod.networking.PrgAgentConfigurationC2SPacket;
+import eigencraft.cpuArchMod.script.ClientScript;
 import io.github.cottonmc.cotton.gui.widget.*;
 import io.github.cottonmc.cotton.gui.widget.data.Color;
 import net.fabricmc.fabric.api.network.ClientSidePacketRegistry;
@@ -103,28 +104,33 @@ public class ProgrammableAgentGUI extends CpuArchModGuiDescription {
 
         addElement(new WLabel(new TranslatableText("gui.cpu_arch_mod.available_scripts")), 0, 2, width, 1);
 
-        BiConsumer<String, FileListItem> configurator = (String file, FileListItem destination) -> {
-            destination.fileName.setText(new LiteralText(file));
-            destination.file = file;
-            destination.select.setOnClick(() -> {
-                try {
-                    currentScript = CpuArchModClient.SCRIPT_MANAGER.readFile(destination.file);
-                } catch (IOException e) {
-                    return;
-                }
-                currentScriptFileName = destination.file;
-                buildMainScreen();
-                resendScriptInfo = true;
-            });
-            destination.download.setOnClick(new Runnable() {
-                @Override
-                public void run() {
-                    System.out.println("click");
-                    CpuArchModClient.SCRIPT_MANAGER.requestScript(destination.file);
-                }
-            });
+        BiConsumer<ClientScript, FileListItem> configurator = (ClientScript script, FileListItem destination) -> {
+            //Common part: set script
+            destination.fileName.setText(new LiteralText(script.getName()));
+            destination.script = script;
+
+            //Serverside script
+            if (script.getType()== ClientScript.SCRIPT_TYPE.SERVERSIDE) {
+                destination.fileName.setColor(Color.ORANGE_DYE.toRgb());
+                destination.button.setLabel(new TranslatableText("gui.cpu_arch_mod.download"));
+                destination.button.setOnClick(() -> CpuArchModClient.SCRIPT_MANAGER.requestScript(destination.script));
+            }
+            //Clientside script
+            else {
+                destination.button.setLabel(new TranslatableText("gui.cpu_arch_mod.select"));
+                destination.button.setOnClick(() -> {
+                    try {
+                        currentScript = CpuArchModClient.SCRIPT_MANAGER.readFile(destination.script.getName());
+                    } catch (IOException e) {
+                        return;
+                    }
+                    currentScriptFileName = destination.script.getName();
+                    buildMainScreen();
+                    resendScriptInfo = true;
+                });
+            }
         };
-        WListPanel<String, FileListItem> files = new WListPanel<>(CpuArchModClient.SCRIPT_MANAGER.listAvailableFiles(), FileListItem::new, configurator);
+        WListPanel<ClientScript, FileListItem> files = new WListPanel<>(CpuArchModClient.SCRIPT_MANAGER.listAvailableScripts(), FileListItem::new, configurator);
         files.setListItemHeight(18);
         addElement(files, 0, 3, width, 7);
     }
@@ -156,14 +162,13 @@ public class ProgrammableAgentGUI extends CpuArchModGuiDescription {
     private static class FileListItem extends WPlainPanel {
         private static final LiteralText defaultText = new LiteralText("internal error");
         WLabel fileName = new WLabel(defaultText);
-        WButton select = new WButton(new TranslatableText("gui.cpu_arch_mod.select"));
-        WButton download = new WButton(new TranslatableText("gui.cpu_arch_mod.download"));
-        String file;
+        WButton button = new WButton();
+        ClientScript script;
 
         public FileListItem() {
             add(fileName, 0, 2);
-            add(select, 180, 0, 54, 18);
-            add(download,126,0,54,18);
+            add(button, 180, 0, 54, 18);
         }
+
     }
 }
