@@ -17,6 +17,7 @@ import net.minecraft.world.World;
 
 public class ProgrammableAgentBlockEntity extends BlockEntity implements BlockEntityClientSerializable {
     private String displayName = "unconfigured";
+    private String infoLine = "";
     private int textColor = Color.ORANGE_DYE.toRgb();
 
     public ProgrammableAgentBlockEntity() {
@@ -31,17 +32,20 @@ public class ProgrammableAgentBlockEntity extends BlockEntity implements BlockEn
         markDirty();
     }
 
+    public void setInfoLine(String infoLine) {
+        this.infoLine = infoLine;
+        sync();
+        markDirty();
+    }
+
     @Override
     public void fromClientTag(CompoundTag compoundTag) {
-        displayName = compoundTag.getString("displayName");
-        textColor = compoundTag.getInt("textColor");
+        this.fromTag(getCachedState(),compoundTag);
     }
 
     @Override
     public CompoundTag toClientTag(CompoundTag compoundTag) {
-        compoundTag.putString("displayName", displayName);
-        compoundTag.putInt("textColor", textColor);
-        return compoundTag;
+        return this.toTag(compoundTag);
     }
 
     @Override
@@ -49,6 +53,7 @@ public class ProgrammableAgentBlockEntity extends BlockEntity implements BlockEn
         super.toTag(tag);
         tag.putString("displayName", displayName);
         tag.putInt("textColor", textColor);
+        tag.putString("infoLine",infoLine);
         return tag;
     }
 
@@ -57,6 +62,7 @@ public class ProgrammableAgentBlockEntity extends BlockEntity implements BlockEn
         super.fromTag(state, tag);
         displayName = tag.getString("displayName");
         textColor = tag.getInt("textColor");
+        infoLine = tag.getString("infoLine");
     }
 
     @Override
@@ -73,22 +79,28 @@ public class ProgrammableAgentBlockEntity extends BlockEntity implements BlockEn
             super(dispatcher);
         }
 
-        @Override
-        public void render(ProgrammableAgentBlockEntity entity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
-            String text = entity.displayName;
-
+        private void renderTextLine(String text,int color, float x, float y, float z, MatrixStack matrices){
             matrices.push();
-            matrices.translate(0.5, 1.5, 0.5);
+            matrices.translate(x, y, z);
             matrices.multiply(this.dispatcher.camera.getRotation());
             matrices.scale(-0.025F, -0.025F, 0.025F);
 
             TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
 
-            float x = (float) (-textRenderer.getWidth(text) / 2);
+            float rx = (float) (-textRenderer.getWidth(text) / 2);
 
-            //textRenderer.draw(text, x, 0, Color.BLACK.toRgb(), false, matrices.peek().getModel(), vertexConsumers, false, 0, light);
-            textRenderer.draw(matrices, text, x, 0, entity.textColor);
+            textRenderer.draw(matrices, text, rx, 0, color);
             matrices.pop();
+        }
+
+        @Override
+        public void render(ProgrammableAgentBlockEntity entity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
+            if (entity.infoLine.equals("")) {
+                renderTextLine(entity.displayName, entity.textColor, 0.5f, 1.5f, 0.5f, matrices);
+            } else {
+                renderTextLine(entity.infoLine, entity.textColor, 0.5f, 1.5f, 0.5f, matrices);
+                renderTextLine(entity.displayName, entity.textColor, 0.5f, 1.75f, 0.5f, matrices);
+            }
         }
     }
 }

@@ -117,4 +117,9 @@ public class ProgrammableAgentContainerBlock extends Block implements CpuArchMod
     public int getStrongRedstonePower(BlockState state, BlockView world, BlockPos pos, Direction direction) {
         return (state.get(POWER))?15:0;
     }
+
+    @Override
+    public int getWeakRedstonePower(BlockState state, BlockView world, BlockPos pos, Direction direction) {
+        return this.getStrongRedstonePower(state,world,pos,direction);
+    }
 }

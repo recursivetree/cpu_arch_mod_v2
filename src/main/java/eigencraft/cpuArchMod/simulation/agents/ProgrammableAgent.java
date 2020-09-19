@@ -37,6 +37,9 @@ public class ProgrammableAgent extends DynamicAgent {
     LuaAPI api = new LuaAPI("node");
     LuaAPI.LuaCallback ON_REDSTONE_SIGNAL = new LuaAPI.LuaCallback();
     LuaAPI.LuaCallback ON_MESSAGE = new LuaAPI.LuaCallback();
+    LuaAPI.LuaCallback ON_SAVE = new LuaAPI.LuaCallback();
+    LuaAPI.LuaCallback ON_LOAD = new LuaAPI.LuaCallback();
+    DataSaver DATA_SAVER = new DataSaver();
     private Script script;
     private String scriptSrc = "";
     private String lastError = null;
@@ -46,7 +49,11 @@ public class ProgrammableAgent extends DynamicAgent {
         api.register("onRedstoneSignal", ON_REDSTONE_SIGNAL);
         api.register("onMessage", ON_MESSAGE);
         api.register("publish", new MessagePublisher());
-        api.register("powerBlock", new RedstoneEmitter());
+        api.register("setRedstonePower", new RedstoneEmitter());
+        api.register("setInfoLine",new InfoLineSetter());
+        api.register("onSave",ON_SAVE);
+        api.register("onConfigurationLoaded",ON_LOAD);
+        api.register("save", DATA_SAVER);
         script = ServerScriptManager.NO_SCRIPT;
         luaScript.compileCode("", CpuArchMod.CONFIGURATION.SCRIPT_EXECUTION_TIMEOUT, api,"default");
     }
@@ -61,6 +68,9 @@ public class ProgrammableAgent extends DynamicAgent {
             this.scriptSrc = CpuArchMod.SCRIPT_MANAGER.readScript(script);
             luaScript.compileCode(scriptSrc, CpuArchMod.CONFIGURATION.SCRIPT_EXECUTION_TIMEOUT, api, script.getName());
             setText(script.getName(),Color.LIME_DYE.toRgb());
+            if (CpuArchMod.CONFIGURATION.RESET_SCRIPT_CONFIGURATION_WHEN_CHANGED) {
+                DATA_SAVER.reset();
+            }
         } catch (IOException  | NullPointerException e) {
             LOGGER.error(String.format("Failed to load file %s: %s",script.getName(),e));
             this.script = ServerScriptManager.NO_SCRIPT;
@@ -117,8 +127,9 @@ public class ProgrammableAgent extends DynamicAgent {
         try {
             luaScript.execute(ON_REDSTONE_SIGNAL.getCallback());
         } catch (LuaError | LuaScript.WatchDogError error) {
-            error.printStackTrace();
             handleLuaError(error);
+        } catch (NullPointerException ignored){
+
         }
     }
 
@@ -129,13 +140,34 @@ public class ProgrammableAgent extends DynamicAgent {
         } catch (LuaError | LuaScript.WatchDogError error) {
             error.printStackTrace();
             handleLuaError(error);
+        } catch (NullPointerException ignored){
+
         }
     }
 
     @Override
     public JsonElement getConfigData() {
         JsonObject root = new JsonObject();
+
+        //Save the scripts
         root.add("script", new JsonPrimitive(script.getUUID().toString()));
+
+        //Call the save callback
+        try {
+            luaScript.execute(ON_SAVE.getCallback());
+        } catch (LuaError | LuaScript.WatchDogError error) {
+            error.printStackTrace();
+            handleLuaError(error);
+        } catch (NullPointerException ignored){
+
+        }
+
+        //if there's anything to store, store it
+        if (DATA_SAVER.shouldSave()){
+            root.add("scriptData", new JsonPrimitive(DATA_SAVER.getValue()));
+        }
+
+
         return root;
     }
 
@@ -147,6 +179,17 @@ public class ProgrammableAgent extends DynamicAgent {
             Script script = CpuArchMod.SCRIPT_MANAGER.getScript(scriptUUID);
             if (script==null) script = new Script(scriptUUID.toString(),scriptUUID);
             setScript(script);
+
+            if (config.has("scriptData")){
+                try {
+                    luaScript.execute(ON_LOAD.getCallback(), LuaString.valueOf(config.get("scriptData").getAsString()));
+                } catch (LuaError | LuaScript.WatchDogError error) {
+                    error.printStackTrace();
+                    handleLuaError(error);
+                } catch (NullPointerException ignored){
+
+                }
+            }
         }
     }
 
@@ -167,24 +210,59 @@ public class ProgrammableAgent extends DynamicAgent {
     }
 
     private class RedstoneEmitter extends TwoArgFunction {
-
         @Override
         public LuaValue call(LuaValue arg, LuaValue arg2) {
-            System.out.println("hi");
             if (arg2.isboolean()) {
-                world.addMainGameTask(new WorldRunnable() {
-                    @Override
-                    public void run(ServerWorld world) {
-                        BlockState blockState = world.getBlockState(pos);
-                        if (blockState.isOf(CpuArchMod.PROGRAMMABLE_NODE)){
-                            world.setBlockState(pos,blockState.with(ProgrammableAgentContainerBlock.POWERED,arg2.toboolean()));
-                        }
+                world.addMainGameTask(world -> {
+                    BlockState blockState = world.getBlockState(pos);
+                    if (blockState.isOf(CpuArchMod.PROGRAMMABLE_NODE)){
+                        world.setBlockState(pos,blockState.with(ProgrammableAgentContainerBlock.POWER,arg2.toboolean()));
+                        world.updateNeighborsAlways(pos,CpuArchMod.PROGRAMMABLE_NODE);
                     }
                 });
                 return LuaValue.TRUE;
             } else {
                 return LuaValue.FALSE;
             }
+        }
+    }
+    private class InfoLineSetter extends TwoArgFunction{
+
+        @Override
+        public LuaValue call(LuaValue arg1, LuaValue arg2) {
+            if (arg2.isstring()){
+                world.addMainGameTask(world -> {
+                    BlockEntity entity = world.getBlockEntity(pos);
+                    if (entity instanceof ProgrammableAgentBlockEntity){
+                        ((ProgrammableAgentBlockEntity)entity).setInfoLine(arg2.tojstring());
+                    }
+                });
+                return LuaValue.TRUE;
+            }
+            return LuaValue.FALSE;
+        }
+    }
+    private class DataSaver extends TwoArgFunction{
+        String luaData = null;
+        @Override
+        public LuaValue call(LuaValue arg1, LuaValue arg2) {
+            if (arg2.isstring()){
+                luaData = arg2.tojstring();
+            }
+            return LuaValue.NIL;
+        }
+
+        public String getValue() {
+            return luaData;
+        }
+
+        public boolean shouldSave() {
+            if (luaData==null) return false;
+            return !luaData.equals("");
+        }
+
+        public void reset() {
+            luaData = null;
         }
     }
 }
